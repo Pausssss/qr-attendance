@@ -58,8 +58,8 @@ export default function TeacherDashboard() {
         {message && <p style={{ marginTop: '0.5rem' }}>{message}</p>}
       </div>
 
-      <div className="card">
-        <h3>Danh sách lớp</h3>
+      <div className="card mb-3">
+        <h3 className="mb-3">Danh sách lớp</h3>
         {classes.map((c) => (
           <div key={c.id} style={{ marginBottom: '0.5rem' }}>
             <Link to={`/teacher/classes/${c.id}`}>

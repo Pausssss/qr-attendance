@@ -10,7 +10,8 @@ export default function TeacherSessionDetail() {
   const [session, setSession] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [qrPayload, setQrPayload] = useState(null);
-  const [showQrModal, setShowQrModal] = useState(false); // popup
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null); // popup ảnh lớn
 
   const loadSession = async () => {
     const classesRes = await api.get('/api/teacher/classes');
@@ -46,7 +47,6 @@ export default function TeacherSessionDetail() {
     loadAttendance();
   }, [sessionId]);
 
-  // 🔵 MỞ BUỔI ĐIỂM DANH
   const openSession = async () => {
     if (!navigator.geolocation) {
       alert('Thiết bị không hỗ trợ GPS.');
@@ -80,15 +80,13 @@ export default function TeacherSessionDetail() {
     );
   };
 
-  // ĐÓNG BUỔI
   const closeSession = async () => {
     const res = await api.put(`/api/teacher/sessions/${sessionId}/close`);
     setSession(res.data);
     setQrPayload(null);
-    setShowQrModal(false);
   };
 
-  // Tự build payload QR nếu đang OPEN
+  // build qrPayload khi session OPEN và có qrToken
   useEffect(() => {
     if (session && session.status === 'OPEN' && session.qrToken) {
       setQrPayload({ sessionId: session.id, qrToken: session.qrToken });
@@ -118,7 +116,7 @@ export default function TeacherSessionDetail() {
         {qrPayload && session.status === 'OPEN' && (
           <div style={{ marginTop: '1rem' }}>
             <h3>QR code cho sinh viên</h3>
-            <p style={{ fontSize: 12, marginBottom: 8 }}>
+            <p className="qr-hint">
               (Nhấn vào mã QR để phóng to cho sinh viên quét)
             </p>
             <div
@@ -137,7 +135,7 @@ export default function TeacherSessionDetail() {
         )}
       </div>
 
-      {/* POPUP QR TOÀN MÀN HÌNH */}
+      {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
         <div
           onClick={() => setShowQrModal(false)}
@@ -164,7 +162,7 @@ export default function TeacherSessionDetail() {
             <h3>Quét mã QR</h3>
             <QRCodeCanvas
               value={JSON.stringify(qrPayload)}
-              size={340} // to hơn
+              size={340}
               includeMargin={true}
             />
             <div style={{ marginTop: 12 }}>
@@ -174,34 +172,96 @@ export default function TeacherSessionDetail() {
         </div>
       )}
 
+      {/* DANH SÁCH ĐIỂM DANH */}
       <div className="card">
         <h3>DANH SÁCH ĐIỂM DANH</h3>
         {attendance.length === 0 && <p>Chưa có sinh viên điểm danh.</p>}
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left' }}>Sinh viên</th>
-              <th>Giờ vào</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendance.map((a) => (
-              <tr key={a.id}>
-                <td>
-                  {a.fullName} ({a.email})
-                </td>
-                <td>
-                  {a.checkInTime
-                    ? new Date(a.checkInTime).toLocaleString()
-                    : '-'}
-                </td>
-                <td>{a.status}</td>
+        {attendance.length > 0 && (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left' }}>Sinh viên</th>
+                <th>Giờ vào</th>
+                <th>Trạng thái</th>
+                <th>Ảnh</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {attendance.map((a) => (
+                <tr key={a.id}>
+                  <td>
+                    {a.fullName} ({a.email})
+                  </td>
+                  <td>
+                    {a.checkInTime
+                      ? new Date(a.checkInTime).toLocaleString()
+                      : '-'}
+                  </td>
+                  <td>{a.status}</td>
+                  <td>
+                    {a.photoUrl ? (
+                      <img
+                        src={a.photoUrl}
+                        alt="Selfie"
+                        style={{
+                          width: 48,
+                          height: 48,
+                          objectFit: 'cover',
+                          borderRadius: 12,
+                          cursor: 'pointer',
+                        }}
+                        onClick={() => setPhotoPreview(a.photoUrl)}
+                      />
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {/* POPUP ẢNH SELFIE */}
+      {photoPreview && (
+        <div
+          onClick={() => setPhotoPreview(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              padding: 16,
+              borderRadius: 12,
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+            }}
+          >
+            <img
+              src={photoPreview}
+              alt="Selfie preview"
+              style={{
+                maxWidth: '80vw',
+                maxHeight: '80vh',
+                borderRadius: 16,
+              }}
+            />
+            <div style={{ textAlign: 'center', marginTop: 8 }}>
+              <button onClick={() => setPhotoPreview(null)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

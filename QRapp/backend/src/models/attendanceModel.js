@@ -1,4 +1,3 @@
-// File: backend/src/models/attendanceModel.js
 const pool = require('../config/db');
 
 const AttendanceModel = {

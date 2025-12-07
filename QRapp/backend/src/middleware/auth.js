@@ -1,4 +1,3 @@
-// File: backend/src/middleware/auth.js
 const { verifyJwt } = require('../utils/jwt');
 
 function auth(req, res, next) {

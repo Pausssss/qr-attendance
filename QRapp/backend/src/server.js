@@ -1,4 +1,3 @@
-// File: backend/src/server.js
 const app = require('./app');
 const { PORT } = require('./config/env');
 const pool = require('./config/db');

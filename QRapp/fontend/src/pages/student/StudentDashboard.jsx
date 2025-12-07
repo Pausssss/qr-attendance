@@ -33,7 +33,7 @@ export default function StudentDashboard() {
   return (
     <div>
       <h2>Lớp học của tôi</h2>
-      <div className="card">
+      <div className="card mb-3">
         <h3>Tham gia lớp bằng mã</h3>
         <form onSubmit={joinClass}>
           <input
