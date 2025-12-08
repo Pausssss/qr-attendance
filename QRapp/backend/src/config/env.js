@@ -10,9 +10,6 @@ module.exports = {
   DB_NAME: process.env.DB_NAME || 'qr_attendance',
   JWT_SECRET: process.env.JWT_SECRET || 'supersecretjwt',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
-  ATTENDANCE_ON_TIME_MINUTES: parseInt(
-    process.env.ATTENDANCE_ON_TIME_MINUTES || '15',
-    10
-  ),
+  ATTENDANCE_ON_TIME_MINUTES: parseInt(process.env.ATTENDANCE_ON_TIME_MINUTES || '15',10),
   CORS_ORIGIN,
 };
