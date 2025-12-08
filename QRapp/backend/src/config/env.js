@@ -1,6 +1,11 @@
+// File: backend/src/config/env.js
 require('dotenv').config();
 
-const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
+// Parse CORS_ORIGIN từ env (danh sách cách nhau bởi dấu phẩy)
+const rawOrigins = process.env.CORS_ORIGIN || '';
+const CORS_ORIGIN = rawOrigins
+  ? rawOrigins.split(',').map((o) => o.trim())
+  : ['http://localhost:5173']; // default khi dev
 
 module.exports = {
   PORT: process.env.PORT || 4000,
@@ -10,6 +15,9 @@ module.exports = {
   DB_NAME: process.env.DB_NAME || 'qr_attendance',
   JWT_SECRET: process.env.JWT_SECRET || 'supersecretjwt',
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
-  ATTENDANCE_ON_TIME_MINUTES: parseInt(process.env.ATTENDANCE_ON_TIME_MINUTES || '15',10),
-  CORS_ORIGIN,
+  ATTENDANCE_ON_TIME_MINUTES: parseInt(
+    process.env.ATTENDANCE_ON_TIME_MINUTES || '15',
+    10
+  ),
+  CORS_ORIGIN, 
 };
