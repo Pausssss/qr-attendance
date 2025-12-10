@@ -1,4 +1,3 @@
-// File: qr-attendance-backend/src/controllers/teacherController.js
 const { ATTENDANCE_ON_TIME_MINUTES } = require('../config/env');
 const { generateClassCode } = require('../utils/generateCode');
 const { generateRandomToken } = require('../utils/randomToken');

@@ -1,4 +1,3 @@
-// File: fontend/src/context/AuthContext.jsx
 import React, { createContext, useContext, useState } from 'react';
 import api from '../api/axiosClient';
 

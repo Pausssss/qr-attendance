@@ -1,4 +1,3 @@
-// File: qr-attendance-frontend/src/api/axiosClient.js
 import axios from "axios";
 
 const api = axios.create({

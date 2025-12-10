@@ -1,4 +1,3 @@
-// File: backend/src/models/classModel.js
 const pool = require('../config/db');
 
 const ClassModel = {

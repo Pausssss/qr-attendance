@@ -1,4 +1,3 @@
-// File: backend/src/controllers/googleAuthController.js
 const { OAuth2Client } = require('google-auth-library');
 const { GOOGLE_CLIENT_ID } = require('../config/env');
 const UserModel = require('../models/userModel');
@@ -93,7 +92,7 @@ const GoogleAuthController = {
       res.json({ user: safeUser, token });
     } catch (err) {
       console.error('Google login unexpected error:', err);
-      // lỗi không mong đợi
+      // lỗi không mong muốn
       return res.status(500).json({ message: 'Internal Google login error' });
     }
   },

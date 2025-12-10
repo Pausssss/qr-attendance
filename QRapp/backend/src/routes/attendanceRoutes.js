@@ -1,4 +1,3 @@
-// File: qr-attendance-backend/src/routes/attendanceRoutes.js
 const express = require('express');
 const authMiddleware = require('../middleware/auth');
 const { requireRole } = require('../middleware/roles');

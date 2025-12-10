@@ -1,4 +1,3 @@
-// File: backend/src/middleware/roles.js
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) {

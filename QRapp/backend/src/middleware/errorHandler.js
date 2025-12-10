@@ -1,4 +1,3 @@
-// File: qr-attendance-backend/src/middleware/errorHandler.js
 function errorHandler(err, req, res, next) {
   console.error(err);
   if (res.headersSent) return next(err);

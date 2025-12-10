@@ -1,4 +1,3 @@
-// File: backend/src/models/index.js
 import { sequelize } from '../config/db.js';
 import UserModel from './userModel.js';
 import ClassModel from './classModel.js';

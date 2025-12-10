@@ -1,4 +1,3 @@
-// File: qr-attendance-backend/src/controllers/studentController.js
 const ClassModel = require('../models/classModel');
 const ClassMemberModel = require('../models/classMemberModel');
 const AttendanceModel = require('../models/attendanceModel');

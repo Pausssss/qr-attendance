@@ -1,5 +1,3 @@
-// File: backend/src/utils/generateCode.js
-
 // Sinh mã lớp ngắn, dễ đọc: A–Z + số 2–9 (bỏ 0,1 cho đỡ nhầm)
 function generateClassCode(length = 6) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';

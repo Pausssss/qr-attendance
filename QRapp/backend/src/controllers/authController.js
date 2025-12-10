@@ -1,4 +1,3 @@
-// File: backend/src/controllers/authController.js
 const bcrypt = require('bcryptjs');
 const UserModel = require('../models/userModel');
 const { signJwt } = require('../utils/jwt');

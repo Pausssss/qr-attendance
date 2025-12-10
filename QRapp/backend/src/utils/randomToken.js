@@ -1,4 +1,3 @@
-// File: backend/src/utils/randomToken.js
 const crypto = require('crypto');
 
 // Sinh token random dùng cho QR

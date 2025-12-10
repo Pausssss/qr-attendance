@@ -1,4 +1,3 @@
-// File: qr-attendance-frontend/src/pages/student/StudentClassDetail.jsx
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../../api/axiosClient';

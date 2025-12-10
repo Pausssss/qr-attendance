@@ -1,7 +1,5 @@
-// File: backend/src/config/env.js
 require('dotenv').config();
 
-// Parse CORS_ORIGIN từ env (danh sách cách nhau bởi dấu phẩy)
 const rawOrigins = process.env.CORS_ORIGIN || '';
 const CORS_ORIGIN = rawOrigins
   ? rawOrigins.split(',').map((o) => o.trim())
