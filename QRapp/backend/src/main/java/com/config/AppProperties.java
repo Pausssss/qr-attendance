@@ -1,7 +1,7 @@
 package com.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-
+import org.springframework.stereotype.Component;
 /**
  * Cấu hình ứng dụng đọc từ application.yml / application.properties
  * Ví dụ:
@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * app.attendance.onTimeMinutes=...
  * app.upload.dir=...
  */
+@Component
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
 

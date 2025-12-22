@@ -1,34 +1,28 @@
 server:
   address: 0.0.0.0
-  port: ${PORT:4000}
+  port: ${PORT:10000}
 
 spring:
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:qr_attendance}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Ho_Chi_Minh
-    username: ${DB_USER:root}
-    password: ${DB_PASSWORD:123456}
+    url: ${SPRING_DATASOURCE_URL:}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQLDialect
     open-in-view: false
-
 app:
-  jwt:
-    secret: ${JWT_SECRET:supersecretjwt}
-    # 7 days (ms)
-    expiration-ms: ${JWT_EXPIRES_MS:604800000}
   cors:
-    origins: ${CORS_ORIGIN:http://localhost:5173}
+    # Comma-separated. Có thể dùng wildcard/pattern.
+    origins: ${APP_CORS_ORIGINS:https://*.onrender.com,http://localhost:5173}
   google:
-    client-id: ${GOOGLE_CLIENT_ID:642523155644-4egadtkj5hpgidmed85b65hhuqs7nogj.apps.googleusercontent.com}
-  attendance:
-    on-time-minutes: ${ATTENDANCE_ON_TIME_MINUTES:15}
+    client-id: ${GOOGLE_CLIENT_ID:${APP_GOOGLE_CLIENT_ID:}}
+  jwt:
+    secret: ${JWT_SECRET:}
+    expiration-ms: ${JWT_EXPIRATION_MS:604800000} # 7 days
   upload:
     dir: ${UPLOAD_DIR:uploads}
-
-logging:
-  level:
-    org.springframework.security: INFO
+  attendance:
+    on-time-minutes: ${ON_TIME_MINUTES:10}

@@ -9,9 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * API xác thực/đăng nhập:
- * - /login: đăng nhập email/password
- * - /google: đăng nhập Google
- * - /me: lấy thông tin user hiện tại
+ * - POST /api/auth/google: đăng nhập Google (frontend gửi Google ID token)
+ * - GET  /api/auth/me: lấy thông tin user hiện tại (đã đăng nhập)
  */
 @RestController
 @RequestMapping("/api/auth")

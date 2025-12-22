@@ -16,13 +16,21 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  const loginWithGoogle = async (idToken, role) => {
+  // ✅ FIX: dùng GET + query param credential
+  const loginWithGoogle = async (credential, role) => {
     setLoading(true);
     try {
-      const res = await api.post("/api/auth/google", { idToken, role });
+      const res = await api.get("/api/auth/google", {
+        params: {
+          credential,
+          role,
+        },
+      });
+
       localStorage.setItem("qr_token", res.data.token);
       localStorage.setItem("qr_user", JSON.stringify(res.data.user));
       setUser(res.data.user);
+
       return res.data.user;
     } finally {
       setLoading(false);
@@ -40,7 +48,11 @@ export function AuthProvider({ children }) {
     [user, loading]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

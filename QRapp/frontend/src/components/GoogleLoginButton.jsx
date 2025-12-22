@@ -1,43 +1,45 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
-/**
- * Google Login Button (Google Identity Services)
- * - Cần thêm script Google ở index.html (đã có trong project)
- * - Client ID: dùng VITE_GOOGLE_CLIENT_ID (fallback sang clientId cũ)
- */
 export default function GoogleLoginButton({ role }) {
   const buttonRef = useRef(null);
-  const { loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    /* global google */
     if (!window.google || !buttonRef.current) return;
 
     const clientId =
       import.meta.env.VITE_GOOGLE_CLIENT_ID ||
       "642523155644-4egadtkj5hpgidmed85b65hhuqs7nogj.apps.googleusercontent.com";
 
-    // Reset để render lại button nếu role thay đổi
     buttonRef.current.innerHTML = "";
 
     window.google.accounts.id.initialize({
       client_id: clientId,
       callback: async (response) => {
         try {
-          // response.credential chính là Google ID Token
-          const user = await loginWithGoogle(response.credential, role);
+          const res = await axios.post(
+            "https://qr-attendance-s4jr.onrender.com/api/auth/google",
+            {
+              idToken: response.credential,
+              role: role,
+            }
+          );
+
+          const { token, user } = res.data;
+
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(user));
 
           if (user.role === "TEACHER") navigate("/teacher");
           else navigate("/student");
         } catch (err) {
-          const msg =
+          console.error(err);
+          alert(
             err?.response?.data?.message ||
-            err?.message ||
-            "Google login failed";
-          alert(msg);
+              "Google login failed"
+          );
         }
       },
     });
@@ -47,7 +49,7 @@ export default function GoogleLoginButton({ role }) {
       size: "large",
       width: 320,
     });
-  }, [role, loginWithGoogle, navigate]);
+  }, [role, navigate]);
 
   return <div ref={buttonRef} style={{ marginBottom: "1rem" }} />;
 }

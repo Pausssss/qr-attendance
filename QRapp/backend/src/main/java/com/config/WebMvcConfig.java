@@ -1,27 +1,35 @@
-
 package com.config;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
-@EnableConfigurationProperties(AppProperties.class)
 public class WebMvcConfig implements WebMvcConfigurer {
 
-  private final AppProperties props;
+    // Nếu bạn KHÔNG set env/prop thì nó tự dùng "uploads"
+    @Value("${app.upload-dir:uploads}")
+    private String uploadDir;
 
-  public WebMvcConfig(AppProperties props) {
-    this.props = props;
-  }
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
 
-  @Override
-  public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    Path uploadDir = Path.of(props.getUpload().getDir()).toAbsolutePath().normalize();
-    registry.addResourceHandler("/uploads/**")
-        .addResourceLocations(uploadDir.toUri().toString());
-  }
+        // Tự tạo folder nếu chưa có (tránh lỗi)
+        try {
+            Files.createDirectories(uploadPath);
+        } catch (IOException e) {
+            throw new RuntimeException("Cannot create upload dir: " + uploadPath, e);
+        }
+
+        // Map URL /uploads/** -> folder uploadPath
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadPath + "/");
+    }
 }

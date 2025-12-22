@@ -1,13 +1,13 @@
 package com.service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.api.dto.AuthDtos;
 import com.config.AppProperties;
 import com.domain.entity.User;
 import com.domain.enums.Role;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.repo.UserRepository;
 import com.security.JwtUtil;
 import org.springframework.stereotype.Service;
@@ -17,8 +17,8 @@ import java.util.Collections;
 
 /**
  * Xác thực bằng Google ID Token (frontend lấy từ Google Identity Services)
- * - Verify token với clientId cấu hình ở app.google.client-id
- * - Nếu user chưa có -> tạo user mới (mặc định STUDENT)
+ * - Verify token với clientId cấu hình ở app.google.client-id (hoặc env GOOGLE_CLIENT_ID)
+ * - Nếu user chưa có -> tạo user mới (mặc định STUDENT hoặc role frontend gửi lên)
  * - Trả về JWT để gọi API
  */
 @Service
@@ -31,7 +31,10 @@ public class GoogleAuthService {
   public GoogleAuthService(UserRepository userRepository, JwtUtil jwtUtil, AppProperties props) {
     this.userRepository = userRepository;
     this.jwtUtil = jwtUtil;
-    this.googleClientId = props.getGoogle().getClientId();
+
+    // props.getGoogle().getClientId() sẽ lấy từ: app.google.client-id
+    // Trong Render nên set env: GOOGLE_CLIENT_ID (đã map trong application.yml)
+    this.googleClientId = props.getGoogle() != null ? props.getGoogle().getClientId() : null;
   }
 
   public AuthDtos.AuthResponse loginWithGoogle(AuthDtos.GoogleLoginRequest req) {
@@ -65,7 +68,6 @@ public class GoogleAuthService {
       if (user == null) {
         Role role = req.role() != null ? req.role() : Role.STUDENT;
 
-                // Tạo user mới cho lần đăng nhập Google đầu tiên (không dùng Lombok)
         user = new User();
         user.setFullName(fullName != null ? fullName : email);
         user.setEmail(email);
@@ -73,7 +75,7 @@ public class GoogleAuthService {
         user.setGoogleId(googleId);
         user.setCreatedAt(LocalDateTime.now());
 
-user = userRepository.save(user);
+        user = userRepository.save(user);
       } else {
         // sync basic info nếu cần
         boolean changed = false;

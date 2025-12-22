@@ -24,58 +24,94 @@ import java.util.stream.Collectors;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final AppProperties props;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AppProperties appProperties;
 
-  public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, AppProperties props) {
-    this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    this.props = props;
-  }
+    public SecurityConfig(
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            AppProperties appProperties
+    ) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.appProperties = appProperties;
+    }
 
-  @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-    http
-        .csrf(csrf -> csrf.disable())
-        .cors(Customizer.withDefaults())
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/",
-                "/api/auth/**",
-                "/uploads/**"
-            ).permitAll()
-            .anyRequest().authenticated()
-        )
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+            .csrf(csrf -> csrf.disable())
+            .cors(Customizer.withDefaults())
+            .sessionManagement(sm ->
+                sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authorizeHttpRequests(auth -> auth
+                // CORS preflight
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-    return http.build();
-  }
+                // Public APIs
+                .requestMatchers(
+                    "/",
+                    "/api/auth/**",
+                    "/uploads/**"
+                ).permitAll()
 
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration cfg = new CorsConfiguration();
+                // Everything else requires auth
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+            );
 
-    // app.cors.origins: "http://localhost:5173,http://127.0.0.1:5173"
-    String originsRaw = props.getCors().getOrigins();
-    List<String> origins = originsRaw == null ? List.of() :
-        Arrays.stream(originsRaw.split(","))
-            .map(String::trim)
-            .filter(s -> !s.isBlank())
-            .collect(Collectors.toList());
+        return http.build();
+    }
 
-    cfg.setAllowedOrigins(origins.isEmpty() ? List.of("http://localhost:5173") : origins);
-    cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    cfg.setAllowedHeaders(List.of("*"));
-    cfg.setAllowCredentials(true);
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
 
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", cfg);
-    return source;
-  }
+        CorsConfiguration config = new CorsConfiguration();
 
-  @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-    return configuration.getAuthenticationManager();
-  }
+        String rawOrigins = appProperties.getCors().getOrigins();
+
+        List<String> origins = rawOrigins == null ? List.of() :
+            Arrays.stream(rawOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .collect(Collectors.toList());
+
+        boolean hasWildcard = origins.stream().anyMatch(o -> o.contains("*"));
+
+        if (origins.isEmpty()) {
+            // fallback an toàn
+            config.setAllowedOriginPatterns(List.of(
+                "https://*.onrender.com",
+                "http://localhost:*"
+            ));
+        } else if (hasWildcard) {
+            // BẮT BUỘC dùng patterns khi có *
+            config.setAllowedOriginPatterns(origins);
+        } else {
+            config.setAllowedOrigins(origins);
+        }
+
+        config.setAllowedMethods(List.of(
+            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+        config.setAllowedHeaders(List.of("*"));
+
+        // JWT => không cần cookie cross-site
+        config.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source =
+            new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration configuration
+    ) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
 }
