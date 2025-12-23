@@ -18,7 +18,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Configuration
 @EnableMethodSecurity
@@ -45,17 +44,13 @@ public class SecurityConfig {
                 sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
-                // CORS preflight
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                // Public APIs
                 .requestMatchers(
                     "/",
                     "/api/auth/**",
+                    "/login/oauth2/**",
                     "/uploads/**"
                 ).permitAll()
-
-                // Everything else requires auth
                 .anyRequest().authenticated()
             )
             .addFilterBefore(
@@ -77,18 +72,18 @@ public class SecurityConfig {
             Arrays.stream(rawOrigins.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
-                .collect(Collectors.toList());
+                .toList();
 
         boolean hasWildcard = origins.stream().anyMatch(o -> o.contains("*"));
 
         if (origins.isEmpty()) {
-            // fallback an toàn
             config.setAllowedOriginPatterns(List.of(
                 "https://*.onrender.com",
+                "https://paus.io.vn",
+                "https://www.paus.io.vn",
                 "http://localhost:*"
             ));
         } else if (hasWildcard) {
-            // BẮT BUỘC dùng patterns khi có *
             config.setAllowedOriginPatterns(origins);
         } else {
             config.setAllowedOrigins(origins);
@@ -98,8 +93,6 @@ public class SecurityConfig {
             "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
         config.setAllowedHeaders(List.of("*"));
-
-        // JWT => không cần cookie cross-site
         config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source =

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import api from "../api/axiosClient";
 
 const AuthContext = createContext(null);
 
@@ -16,23 +15,10 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  // Login với Google: POST body { idToken, role? }
-  const loginWithGoogle = async (credential, role) => {
+  const loginWithGoogle = () => {
     setLoading(true);
-    try {
-      const res = await api.post("/api/auth/google", {
-        idToken: credential,
-        role,
-      });
-
-      localStorage.setItem("qr_token", res.data.token);
-      localStorage.setItem("qr_user", JSON.stringify(res.data.user));
-      setUser(res.data.user);
-
-      return res.data.user;
-    } finally {
-      setLoading(false);
-    }
+    window.location.href =
+      "https://qr-attendance-s4jr.onrender.com/api/auth/google";
   };
 
   const logout = () => {
