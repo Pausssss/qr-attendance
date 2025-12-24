@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import OAuthCallback from "./pages/OAuthCallback";
 
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import TeacherClassDetail from "./pages/teacher/TeacherClassDetail";
