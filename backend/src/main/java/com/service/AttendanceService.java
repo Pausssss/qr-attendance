@@ -21,7 +21,9 @@ import java.util.Map;
 @Service
 public class AttendanceService {
 
-  private static final double MAX_DISTANCE_METERS = 50.0;
+  // GPS trên điện thoại có thể lệch vài chục mét (đặc biệt trong nhà).
+  // 80m là ngưỡng thực tế hơn để tránh "đúng chỗ nhưng fail".
+  private static final double MAX_DISTANCE_METERS = 80.0;
 
   private final SessionRepository sessionRepo;
   private final ClassMemberRepository classMemberRepo;
@@ -57,6 +59,12 @@ public class AttendanceService {
     Double gpsLat = req.gpsLat();
     Double gpsLng = req.gpsLng();
     String photoUrl = req.photoUrl();
+
+    // Tránh client gửi base64 cực dài (data:image/...;base64,...) gây quá tải DB.
+    if (photoUrl != null && photoUrl.startsWith("data:")) {
+      throw new ApiException(HttpStatus.BAD_REQUEST,
+          "Ảnh quá lớn. Vui lòng upload ảnh trước (/api/upload/photo) và gửi lại photoUrl dạng /uploads/...");
+    }
 
     SessionEntity session = sessionRepo.findById(sessionId).orElse(null);
     if (session == null) throw new ApiException(HttpStatus.NOT_FOUND, "Session not found");

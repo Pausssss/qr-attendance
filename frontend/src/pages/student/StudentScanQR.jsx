@@ -2,6 +2,37 @@ import React, { useState, useRef, useEffect } from 'react';
 import BarcodeScanner from 'react-qr-barcode-scanner';
 import api from '../../api/axiosClient';
 
+const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+function dataUrlToFile(dataUrl, filename = `selfie_${Date.now()}.jpg`) {
+  const [meta, b64] = dataUrl.split(',');
+  const mime = (meta && meta.match(/data:(.*);base64/))?.[1] || 'image/jpeg';
+  const bytes = atob(b64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new File([arr], filename, { type: mime });
+}
+
+async function uploadSelfie(selfieDataUrl) {
+  const file = dataUrlToFile(selfieDataUrl);
+  const form = new FormData();
+  form.append('file', file);
+  const res = await api.post('/api/upload/photo', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data?.photoUrl;
+}
+
+function resolveMediaUrl(url) {
+  if (!url) return url;
+  // backend trả về "/uploads/..." -> cần prefix baseURL để load được trên domain frontend
+  if (typeof url === 'string' && url.startsWith('/uploads/')) {
+    const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
+    return `${base}${url}`;
+  }
+  return url;
+}
+
 export default function StudentScanQR() {
   // step: scan QR -> selfie -> done
   const [step, setStep] = useState('scan'); 
@@ -130,11 +161,30 @@ export default function StudentScanQR() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          const accuracy = pos.coords.accuracy;
+          if (accuracy && accuracy > 80) {
+            setStatus('error');
+            setMessage(
+              `Vị trí hiện tại chưa chính xác (±${Math.round(
+                accuracy
+              )}m). Hãy bật "Độ chính xác cao" (High accuracy) và thử lại.`
+            );
+            return;
+          }
+
+          // ✅ Upload ảnh trước, chỉ lưu URL (ngắn) vào DB thay vì base64
+          const photoUrl = await uploadSelfie(selfieDataUrl);
+          if (!photoUrl) {
+            setStatus('error');
+            setMessage('Upload ảnh thất bại. Hãy thử chụp lại và gửi lại.');
+            return;
+          }
+
           const body = {
             payload,
             gpsLat: pos.coords.latitude,
             gpsLng: pos.coords.longitude,
-            photoUrl: selfieDataUrl, // base64 dataURL
+            photoUrl, // "/uploads/xxx.jpg" (hoặc URL)
           };
 
           const res = await api.post('/api/attendance/check-in', body);
@@ -155,7 +205,8 @@ export default function StudentScanQR() {
       () => {
         setStatus('error');
         setMessage('Không lấy được vị trí GPS. Hãy bật GPS và thử lại.');
-      }
+      },
+      GEO_OPTIONS
     );
   };
 
@@ -290,7 +341,7 @@ export default function StudentScanQR() {
               <div className="mt-2">
                 <p className="text-muted">Ảnh đã gửi:</p>
                 <img
-                  src={attendance.photoUrl}
+                  src={resolveMediaUrl(attendance.photoUrl)}
                   alt="Đã gửi"
                   style={{
                     width: '100%',

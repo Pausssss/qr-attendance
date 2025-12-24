@@ -114,11 +114,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <div className="app">
+    <div>
       <Navbar />
-      <main className="container" style={{ paddingTop: 18, paddingBottom: 28 }}>
+      <div className="container">
         <AppRoutes />
-      </main>
+      </div>
     </div>
   );
 }

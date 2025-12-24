@@ -3,6 +3,17 @@ import { useParams } from 'react-router-dom';
 import api from '../../api/axiosClient';
 import { QRCodeCanvas } from 'qrcode.react';
 
+const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
+
+function resolveMediaUrl(url) {
+  if (!url) return url;
+  if (typeof url === 'string' && url.startsWith('/uploads/')) {
+    const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
+    return `${base}${url}`;
+  }
+  return url;
+}
+
 export default function TeacherSessionDetail() {
   // URL: /teacher/sessions/:sessionId
   const { sessionId } = useParams();
@@ -55,6 +66,17 @@ export default function TeacherSessionDetail() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
+          const accuracy = pos.coords.accuracy;
+          // PC/laptop thường trả vị trí theo Wi-Fi/IP -> lệch km. Chặn để tránh SV bị "quá xa".
+          if (accuracy && accuracy > 120) {
+            alert(
+              `Vị trí giảng viên chưa chính xác (±${Math.round(
+                accuracy
+              )}m). Hãy bật "Độ chính xác cao" hoặc mở điểm danh bằng điện thoại để GPS chuẩn hơn.`
+            );
+            return;
+          }
+
           const body = {
             teacherLat: pos.coords.latitude,
             teacherLng: pos.coords.longitude,
@@ -75,7 +97,8 @@ export default function TeacherSessionDetail() {
       },
       () => {
         alert('Không lấy được vị trí GPS. Hãy bật GPS và cho phép quyền truy cập.');
-      }
+      },
+      GEO_OPTIONS
     );
   };
 
@@ -200,7 +223,7 @@ export default function TeacherSessionDetail() {
                   <td>
                     {a.photoUrl ? (
                       <img
-                        src={a.photoUrl}
+                        src={resolveMediaUrl(a.photoUrl)}
                         alt="Selfie"
                         style={{
                           width: 48,
@@ -209,7 +232,7 @@ export default function TeacherSessionDetail() {
                           borderRadius: 12,
                           cursor: 'pointer',
                         }}
-                        onClick={() => setPhotoPreview(a.photoUrl)}
+                        onClick={() => setPhotoPreview(resolveMediaUrl(a.photoUrl))}
                       />
                     ) : (
                       <span className="text-muted">—</span>
@@ -247,7 +270,7 @@ export default function TeacherSessionDetail() {
             }}
           >
             <img
-              src={photoPreview}
+              src={resolveMediaUrl(photoPreview)}
               alt="Selfie preview"
               style={{
                 maxWidth: '80vw',
