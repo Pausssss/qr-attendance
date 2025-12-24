@@ -3,30 +3,40 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
 
   return (
-    <div className="navbar">
-      <div className="logo">
-        <Link to="/">QRClass</Link>
-      </div>
+    <header className="navbar">
+      <div className="wrap">
+        <Link to="/" className="brand">
+          <span className="dot" />
+          QRClass
+        </Link>
 
-      <div>
-        {user ? (
-          <>
-            {user.role === "TEACHER" && <Link to="/teacher">Giảng viên</Link>}
-            {user.role === "STUDENT" && (<>
-              <Link to="/student">Sinh viên</Link>
-              <Link to="/student/scan" style={{ marginLeft: 12 }}>Quét QR</Link>
-            </>)}
-            <button className="secondary" onClick={logout}>
-              Đăng xuất
-            </button>
-          </>
-        ) : (
-          <Link to="/login">Đăng nhập</Link>
-        )}
+        <nav className="nav-links">
+          {user ? (
+            <>
+              {user.role === "TEACHER" && <Link to="/teacher">Giảng viên</Link>}
+              {user.role === "STUDENT" && (
+                <>
+                  <Link to="/student">Sinh viên</Link>
+                  <Link to="/student/scan">Quét QR</Link>
+                </>
+              )}
+              <button onClick={logout} disabled={loading}>
+                Đăng xuất
+              </button>
+              <div className="nav-user">
+                <div className="avatar" title={user.email} />
+              </div>
+            </>
+          ) : (
+            <>
+              <Link to="/login">Đăng nhập</Link>
+            </>
+          )}
+        </nav>
       </div>
-    </div>
+    </header>
   );
 }
