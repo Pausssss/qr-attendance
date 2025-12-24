@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
+import api from "../api/axiosClient";
 
 const AuthContext = createContext(null);
 
@@ -15,10 +16,28 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(false);
 
-  const loginWithGoogle = () => {
+  /**
+   * Google Identity Services trả về JWT ở response.credential.
+   * Frontend gửi JWT này lên backend để verify và nhận JWT của hệ thống.
+   */
+  const loginWithGoogle = async (credential, role) => {
     setLoading(true);
-    window.location.href =
-      "https://qr-attendance-s4jr.onrender.com/api/auth/google";
+    try {
+      const res = await api.post("/api/auth/google", {
+        idToken: credential,
+        role,
+      });
+
+      const { token, user: userResp } = res.data || {};
+      if (token) localStorage.setItem("qr_token", token);
+      if (userResp) {
+        localStorage.setItem("qr_user", JSON.stringify(userResp));
+        setUser(userResp);
+      }
+      return userResp;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {

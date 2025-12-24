@@ -3,6 +3,8 @@ server:
   port: ${PORT:10000}
 
 spring:
+  jackson:
+    time-zone: Asia/Ho_Chi_Minh
   datasource:
     url: ${SPRING_DATASOURCE_URL:}
     username: ${SPRING_DATASOURCE_USERNAME:}

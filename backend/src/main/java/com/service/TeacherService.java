@@ -211,8 +211,9 @@ public class TeacherService {
 
     String qrToken = CodeUtil.randomToken(16);
 
-    // Hết hạn sau onTimeMinutes kể từ thời điểm bắt đầu buổi (sessionDate)
-    LocalDateTime expiresAt = session.getSessionDate().plusMinutes(onTimeMinutes);
+    // Hết hạn sau onTimeMinutes kể từ thời điểm GIẢNG VIÊN MỞ điểm danh.
+    // Nếu dùng sessionDate thì mở lại sau giờ học sẽ bị hết hạn ngay lập tức.
+    LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(onTimeMinutes);
 
     session.setStatus(SessionStatus.OPEN);
     session.setQrToken(qrToken);

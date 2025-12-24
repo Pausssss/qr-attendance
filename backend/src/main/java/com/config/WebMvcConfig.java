@@ -13,8 +13,9 @@ import java.nio.file.Paths;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    // Nếu bạn KHÔNG set env/prop thì nó tự dùng "uploads"
-    @Value("${app.upload-dir:uploads}")
+    // Dùng cùng key với application.yml: app.upload.dir (env: UPLOAD_DIR)
+    // (Vẫn fallback về uploads nếu không set)
+    @Value("${app.upload.dir:${app.upload-dir:uploads}}")
     private String uploadDir;
 
     @Override
