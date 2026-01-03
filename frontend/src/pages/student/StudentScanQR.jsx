@@ -40,6 +40,7 @@ export default function StudentScanQR() {
   const [message, setMessage] = useState('');
   const [payload, setPayload] = useState(null); // dữ liệu từ QR {sessionId, qrToken}
   const [attendance, setAttendance] = useState(null);
+  const [distanceInfo, setDistanceInfo] = useState({ distanceMeters: null, maxDistanceMeters: null });
   const [selfieDataUrl, setSelfieDataUrl] = useState(null);
 
   const videoRef = useRef(null);
@@ -191,11 +192,20 @@ export default function StudentScanQR() {
           setStatus('success');
           setMessage('Điểm danh thành công!');
           setAttendance(res.data.attendance || null);
+          setDistanceInfo({
+            distanceMeters: res.data?.distanceMeters ?? null,
+            maxDistanceMeters: res.data?.maxDistanceMeters ?? null,
+          });
           setStep('done');
           stopCamera();
         } catch (err) {
           console.error(err);
           setStatus('error');
+          // Nếu backend có trả thêm distanceMeters/maxDistanceMeters trong lỗi, mình lưu lại để hiển thị cho dễ debug
+          const d = err.response?.data?.distanceMeters ?? null;
+          const m = err.response?.data?.maxDistanceMeters ?? null;
+          setDistanceInfo({ distanceMeters: d, maxDistanceMeters: m });
+
           setMessage(
             err.response?.data?.message ||
               'Không điểm danh được. Hãy thử lại hoặc liên hệ giảng viên.'
@@ -217,6 +227,7 @@ export default function StudentScanQR() {
     setPayload(null);
     setAttendance(null);
     setSelfieDataUrl(null);
+    setDistanceInfo({ distanceMeters: null, maxDistanceMeters: null });
   };
 
   return (
@@ -335,6 +346,18 @@ export default function StudentScanQR() {
                 {attendance.checkInTime
                   ? new Date(attendance.checkInTime).toLocaleString()
                   : '—'}
+              </p>
+            )}
+
+            {(distanceInfo.distanceMeters !== null || distanceInfo.maxDistanceMeters !== null) && (
+              <p className="text-muted">
+                Khoảng cách tới vị trí lớp:{' '}
+                <strong>
+                  {distanceInfo.distanceMeters !== null ? `${distanceInfo.distanceMeters}m` : '—'}
+                </strong>
+                {distanceInfo.maxDistanceMeters !== null
+                  ? ` (tối đa ${distanceInfo.maxDistanceMeters}m)`
+                  : ''}
               </p>
             )}
             {attendance?.photoUrl && (

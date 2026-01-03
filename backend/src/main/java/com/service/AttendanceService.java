@@ -21,9 +21,8 @@ import java.util.Map;
 @Service
 public class AttendanceService {
 
-  // GPS trên điện thoại có thể lệch vài chục mét (đặc biệt trong nhà).
-  // 80m là ngưỡng thực tế hơn để tránh "đúng chỗ nhưng fail".
-  private static final double MAX_DISTANCE_METERS = 80.0;
+  // Ngưỡng điểm danh theo GPS (m)
+  private static final double MAX_DISTANCE_METERS = 50.0;
 
   private final SessionRepository sessionRepo;
   private final ClassMemberRepository classMemberRepo;
@@ -83,16 +82,25 @@ public class AttendanceService {
     }
 
     // distance check (if teacher gps exists)
-    if (session.getTeacherLat() != null && session.getTeacherLng() != null) {
+    Double distanceMeters = null;
+    if (session.getTeacherLat() != null && session.getTeacherLng() != null
+        && gpsLat != null && gpsLng != null) {
       double dist = distanceInMeters(
           session.getTeacherLat().doubleValue(),
           session.getTeacherLng().doubleValue(),
           gpsLat,
           gpsLng
       );
+      distanceMeters = dist;
       if (dist > MAX_DISTANCE_METERS) {
-        throw new ApiException(HttpStatus.BAD_REQUEST,
-            "Bạn đang ở quá xa vị trí lớp học, không thể điểm danh (≈ " + Math.round(dist) + " m).");
+        throw new ApiException(
+            HttpStatus.BAD_REQUEST,
+            "Bạn đang ở quá xa vị trí lớp học, không thể điểm danh (≈ " + Math.round(dist) + " m).",
+            Map.of(
+                "distanceMeters", Math.round(dist),
+                "maxDistanceMeters", Math.round(MAX_DISTANCE_METERS)
+            )
+        );
       }
     }
 
@@ -123,7 +131,9 @@ att = attendanceRepo.save(att);
 
     return Map.of(
         "message", "Check-in success",
-        "attendance", att
+        "attendance", att,
+        "distanceMeters", distanceMeters == null ? null : Math.round(distanceMeters),
+        "maxDistanceMeters", Math.round(MAX_DISTANCE_METERS)
     );
   }
 

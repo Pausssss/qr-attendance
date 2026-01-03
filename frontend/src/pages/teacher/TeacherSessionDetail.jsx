@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosClient';
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -17,29 +17,44 @@ function resolveMediaUrl(url) {
 export default function TeacherSessionDetail() {
   // URL: /teacher/sessions/:sessionId
   const { sessionId } = useParams();
+  const navigate = useNavigate();
+
   const [session, setSession] = useState(null);
+  const [members, setMembers] = useState([]);
   const [attendance, setAttendance] = useState([]);
+
   const [qrPayload, setQrPayload] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState(null); // popup ảnh lớn
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   const loadSession = async () => {
+    // backend chưa có endpoint get session by id => tìm qua classes/sessions
     const classesRes = await api.get('/api/teacher/classes');
-    const sessionsByClassPromises = classesRes.data.map((c) =>
-      api.get(`/api/teacher/classes/${c.id}/sessions`)
-    );
+    const sessionsByClassPromises = classesRes.data.map((c) => api.get(`/api/teacher/classes/${c.id}/sessions`));
     const sessionLists = await Promise.all(sessionsByClassPromises);
 
     let found = null;
     const idNum = Number(sessionId);
-    for (const list of sessionLists) {
+    for (let idx = 0; idx < sessionLists.length; idx++) {
+      const list = sessionLists[idx];
       const s = list.data.find((x) => x.id === idNum);
       if (s) {
         found = s;
         break;
       }
     }
+
     setSession(found);
+
+    // load members of that class (for manual check-in)
+    if (found?.classId) {
+      try {
+        const memRes = await api.get(`/api/teacher/classes/${found.classId}/members`);
+        setMembers(memRes.data || []);
+      } catch {
+        setMembers([]);
+      }
+    }
   };
 
   const loadAttendance = async () => {
@@ -55,7 +70,16 @@ export default function TeacherSessionDetail() {
     if (!sessionId) return;
     loadSession();
     loadAttendance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
+
+  const attendedStudentIds = useMemo(() => {
+    const set = new Set();
+    (attendance || []).forEach((a) => {
+      if (a?.studentId != null) set.add(Number(a.studentId));
+    });
+    return set;
+  }, [attendance]);
 
   const openSession = async () => {
     if (!navigator.geolocation) {
@@ -67,7 +91,6 @@ export default function TeacherSessionDetail() {
       async (pos) => {
         try {
           const accuracy = pos.coords.accuracy;
-          // PC/laptop thường trả vị trí theo Wi-Fi/IP -> lệch km. Chặn để tránh SV bị "quá xa".
           if (accuracy && accuracy > 120) {
             alert(
               `Vị trí giảng viên chưa chính xác (±${Math.round(
@@ -81,18 +104,12 @@ export default function TeacherSessionDetail() {
             teacherLat: pos.coords.latitude,
             teacherLng: pos.coords.longitude,
           };
-          const res = await api.put(
-            `/api/teacher/sessions/${sessionId}/open`,
-            body
-          );
+          const res = await api.put(`/api/teacher/sessions/${sessionId}/open`, body);
           setSession(res.data);
           setQrPayload(res.data.qrPayload);
         } catch (err) {
           console.error(err);
-          alert(
-            err.response?.data?.message ||
-              'Không mở được phiên điểm danh, hãy thử lại.'
-          );
+          alert(err.response?.data?.message || 'Không mở được phiên điểm danh, hãy thử lại.');
         }
       },
       () => {
@@ -106,6 +123,27 @@ export default function TeacherSessionDetail() {
     const res = await api.put(`/api/teacher/sessions/${sessionId}/close`);
     setSession(res.data);
     setQrPayload(null);
+  };
+
+  const deleteSession = async () => {
+    if (!window.confirm('Xóa buổi học này (kèm toàn bộ điểm danh) ?')) return;
+    await api.delete(`/api/teacher/sessions/${sessionId}`);
+    alert('Đã xóa buổi học.');
+    // quay lại lớp
+    if (session?.classId) navigate(`/teacher/classes/${session.classId}`);
+    else navigate('/teacher');
+  };
+
+  const manualCheckIn = async (studentId) => {
+    try {
+      await api.post(`/api/teacher/sessions/${sessionId}/manual-attendance`, {
+        studentId,
+        note: '',
+      });
+      await loadAttendance();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Không điểm danh thủ công được.');
+    }
   };
 
   // build qrPayload khi session OPEN và có qrToken
@@ -128,19 +166,22 @@ export default function TeacherSessionDetail() {
         <p>Thời gian: {new Date(session.sessionDate).toLocaleString()}</p>
         <p>Trạng thái: {session.status}</p>
 
-        <button onClick={openSession} disabled={session.status === 'OPEN'}>
-          Mở điểm danh
-        </button>{' '}
-        <button onClick={closeSession} disabled={session.status === 'CLOSED'}>
-          Đóng điểm danh
-        </button>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={openSession} disabled={session.status === 'OPEN'}>
+            Mở điểm danh
+          </button>
+          <button onClick={closeSession} disabled={session.status === 'CLOSED'}>
+            Đóng điểm danh
+          </button>
+          <button className="btn btnDanger btnSm" onClick={deleteSession}>
+            Xóa buổi học
+          </button>
+        </div>
 
         {qrPayload && session.status === 'OPEN' && (
           <div style={{ marginTop: '1rem' }}>
             <h3>QR code cho sinh viên</h3>
-            <p className="qr-hint">
-              (Nhấn vào mã QR để phóng to cho sinh viên quét)
-            </p>
+            <p className="qr-hint">(Nhấn vào mã QR để phóng to cho sinh viên quét)</p>
             <div
               style={{
                 display: 'inline-block',
@@ -182,11 +223,7 @@ export default function TeacherSessionDetail() {
             }}
           >
             <h3>Quét mã QR</h3>
-            <QRCodeCanvas
-              value={JSON.stringify(qrPayload)}
-              size={340}
-              includeMargin={true}
-            />
+            <QRCodeCanvas value={JSON.stringify(qrPayload)} size={340} includeMargin={true} />
             <div style={{ marginTop: 12 }}>
               <button onClick={() => setShowQrModal(false)}>Đóng</button>
             </div>
@@ -194,7 +231,44 @@ export default function TeacherSessionDetail() {
         </div>
       )}
 
-      {/* DANH SÁCH ĐIỂM DANH */}
+      {/* MANUAL ATTENDANCE */}
+      <div className="card">
+        <h3>Điểm danh thủ công (fallback)</h3>
+        {members.length === 0 && <p>Chưa có sinh viên trong lớp.</p>}
+        {members.length > 0 && (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left' }}>Sinh viên</th>
+                <th style={{ width: 180 }}>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {members.map((m) => {
+                const done = attendedStudentIds.has(Number(m.studentId));
+                return (
+                  <tr key={m.id}>
+                    <td>
+                      {m.fullName} ({m.email})
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        className="btn btnSm"
+                        disabled={done}
+                        onClick={() => manualCheckIn(m.studentId)}
+                      >
+                        {done ? 'Đã điểm danh' : 'Điểm danh thủ công'}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* ATTENDANCE LIST */}
       <div className="card">
         <h3>DANH SÁCH ĐIỂM DANH</h3>
         {attendance.length === 0 && <p>Chưa có sinh viên điểm danh.</p>}
@@ -214,11 +288,7 @@ export default function TeacherSessionDetail() {
                   <td>
                     {a.fullName} ({a.email})
                   </td>
-                  <td>
-                    {a.checkInTime
-                      ? new Date(a.checkInTime).toLocaleString()
-                      : '-'}
-                  </td>
+                  <td>{a.checkInTime ? new Date(a.checkInTime).toLocaleString() : '-'}</td>
                   <td>{a.status}</td>
                   <td>
                     {a.photoUrl ? (
@@ -272,11 +342,7 @@ export default function TeacherSessionDetail() {
             <img
               src={resolveMediaUrl(photoPreview)}
               alt="Selfie preview"
-              style={{
-                maxWidth: '80vw',
-                maxHeight: '80vh',
-                borderRadius: 16,
-              }}
+              style={{ maxWidth: '80vw', maxHeight: '80vh', borderRadius: 16 }}
             />
             <div style={{ textAlign: 'center', marginTop: 8 }}>
               <button onClick={() => setPhotoPreview(null)}>Đóng</button>
