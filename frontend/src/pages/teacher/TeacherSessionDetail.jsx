@@ -9,7 +9,9 @@ function resolveMediaUrl(url) {
   if (!url) return url;
   if (typeof url === 'string' && url.startsWith('/uploads/')) {
     const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
-    return `${base}${url}`;
+    // Nếu baseURL bị set là .../api thì strip để ảnh trỏ đúng /uploads/**
+    const origin = base.replace(/\/api\/?$/, '');
+    return `${origin}${url}`;
   }
   return url;
 }

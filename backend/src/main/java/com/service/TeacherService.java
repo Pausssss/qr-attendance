@@ -130,17 +130,6 @@ public class TeacherService {
   }
 
   @Transactional
-  public Map<String, Object> clearClassMembers(Long classId) {
-    ClassEntity cls = classRepo.findById(classId).orElse(null);
-    if (cls == null || !Objects.equals(cls.getTeacherId(), currentTeacherId())) {
-      throw new ApiException(HttpStatus.NOT_FOUND, "Class not found");
-    }
-
-    classMemberRepo.deleteByClassId(classId);
-    return Map.of("message", "Cleared all members");
-  }
-
-  @Transactional
   public Map<String, Object> deleteSession(Long sessionId) {
     SessionEntity session = sessionRepo.findById(sessionId).orElse(null);
     if (session == null) throw new ApiException(HttpStatus.NOT_FOUND, "Session not found");
@@ -190,7 +179,10 @@ public class TeacherService {
     a.setGpsLat(null);
     a.setGpsLng(null);
     a.setPhotoUrl(null);
-    a.setStatus(AttendanceStatus.MANUAL);
+    // NOTE: DB thường khai báo status là ENUM (ON_TIME/LATE/ABSENT).
+    // Nếu lưu giá trị lạ sẽ bị lỗi "Data truncated for column 'status'".
+    // Điểm danh thủ công sẽ được tính như có mặt đúng giờ.
+    a.setStatus(AttendanceStatus.ON_TIME);
 
     Attendance saved = attendanceRepo.save(a);
 

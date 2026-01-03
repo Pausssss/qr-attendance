@@ -42,13 +42,6 @@ export default function TeacherClassDetail() {
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
   }
 
-  async function clearAllMembers() {
-    if (!window.confirm('Xóa TOÀN BỘ danh sách lớp (không xóa lớp)?')) return;
-    await api.delete(`/api/teacher/classes/${id}/members`);
-    setMembers([]);
-    alert('Đã xóa toàn bộ danh sách lớp.');
-  }
-
   async function deleteClass() {
     if (!window.confirm('Xóa lớp (kèm buổi học + điểm danh) ?')) return;
     await api.delete(`/api/teacher/classes/${id}`);
@@ -67,9 +60,6 @@ export default function TeacherClassDetail() {
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <Link to={`/teacher/classes/${id}/report`}>Xem báo cáo</Link>
-            <button className="btn btnWarn btnSm" onClick={clearAllMembers}>
-              Xóa danh sách lớp
-            </button>
             <button className="btn btnDanger btnSm" onClick={deleteClass}>
               Xóa lớp
             </button>
@@ -98,18 +88,20 @@ export default function TeacherClassDetail() {
 
       <div className="card">
         <h3>Buổi học</h3>
-        <form onSubmit={createSession} style={{ marginBottom: '1rem', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <form onSubmit={createSession} className="row" style={{ marginBottom: '1rem' }}>
           <input
+            className="input"
             placeholder="Tiêu đề (Tuần 3 - Tiết 1)"
             value={newSession.title}
             onChange={(e) => setNewSession((s) => ({ ...s, title: e.target.value }))}
           />
           <input
+            className="input"
             type="datetime-local"
             value={newSession.sessionDate}
             onChange={(e) => setNewSession((s) => ({ ...s, sessionDate: e.target.value }))}
           />
-          <button>Tạo buổi học</button>
+          <button className="btn btnPrimary">Tạo buổi học</button>
         </form>
 
         {sessions.length === 0 && <p>Chưa có buổi học.</p>}

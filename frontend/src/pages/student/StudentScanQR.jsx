@@ -28,7 +28,8 @@ function resolveMediaUrl(url) {
   // backend trả về "/uploads/..." -> cần prefix baseURL để load được trên domain frontend
   if (typeof url === 'string' && url.startsWith('/uploads/')) {
     const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
-    return `${base}${url}`;
+    const origin = base.replace(/\/api\/?$/, '');
+    return `${origin}${url}`;
   }
   return url;
 }

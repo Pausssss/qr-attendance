@@ -56,12 +56,6 @@ public class TeacherController {
     return teacherService.deleteClass(id);
   }
 
-  /** Xóa toàn bộ danh sách lớp (chỉ members) - không xóa lớp. */
-  @DeleteMapping("/classes/{id}/members")
-  public Map<String, Object> clearMembers(@PathVariable Long id) {
-    return teacherService.clearClassMembers(id);
-  }
-
   @GetMapping("/classes/{id}/members")
   public List<Map<String, Object>> members(@PathVariable Long id) {
     return teacherService.getClassMembers(id);
