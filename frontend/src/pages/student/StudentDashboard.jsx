@@ -72,11 +72,18 @@ export default function StudentDashboard() {
 
           {classes.length === 0 && <p>Chưa có lớp nào.</p>}
 
-          {classes.map((c) => (
-            <div key={c.id} style={{ marginBottom: '0.5rem' }}>
-              <Link to={`/student/classes/${c.id}`}>{c.className}</Link>
-            </div>
-          ))}
+          {classes.length > 0 && (
+            <ul>
+              {classes.map((c) => (
+                <li key={c.id} className="flex justify-between">
+                  <Link to={`/student/classes/${c.id}`} className="fw-800">
+                    {c.className}
+                  </Link>
+                  <span className="muted">ID: {c.id}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

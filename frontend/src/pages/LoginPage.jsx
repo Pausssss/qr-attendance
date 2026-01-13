@@ -13,7 +13,7 @@ export default function LoginPage() {
           tự tạo tài khoản dựa trên email Google.
         </p>
 
-        <div className="card" style={{ marginTop: 14 }}>
+        <div className="card mt-3">
           <form className="form" onSubmit={(e) => e.preventDefault()}>
             <div>
               <label>Vai trò</label>

@@ -7,12 +7,10 @@ export default function GoogleLoginButton({ role }) {
   const navigate = useNavigate();
   const { loginWithGoogle } = useAuth();
 
-  useEffect(() => {
-    if (!window.google || !buttonRef.current) return;
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    const clientId =
-      import.meta.env.VITE_GOOGLE_CLIENT_ID ||
-      "642523155644-4egadtkj5hpgidmed85b65hhuqs7nogj.apps.googleusercontent.com";
+  useEffect(() => {
+    if (!window.google || !buttonRef.current || !clientId) return;
 
     buttonRef.current.innerHTML = "";
 
@@ -41,5 +39,13 @@ export default function GoogleLoginButton({ role }) {
     });
   }, [role, navigate, loginWithGoogle]);
 
-  return <div ref={buttonRef} style={{ marginBottom: "1rem" }} />;
+  if (!clientId) {
+    return (
+      <div className="alert alert-warning mb-3">
+        Thiếu cấu hình <b>VITE_GOOGLE_CLIENT_ID</b>. Hãy tạo file <code>.env.local</code> theo <code>.env.example</code>.
+      </div>
+    );
+  }
+
+  return <div ref={buttonRef} className="mb-3" />;
 }

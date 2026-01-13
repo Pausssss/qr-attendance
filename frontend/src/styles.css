@@ -890,3 +890,69 @@ table{ width:100%; border-collapse: separate; border-spacing: 0; }
 table th, table td{ padding: 10px 10px; border-bottom: 1px solid var(--border); }
 table th{ text-align:left; color: var(--muted); font-weight: 800; }
 table tr:hover td{ background: rgba(255,255,255,.04); }
+
+
+
+/* ---------- Extra UI helpers (đồng bộ pages) ---------- */
+.m0{ margin:0 !important; }
+
+.thumb{
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.thumb:hover{ transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+.media-full{
+  max-width: 80vw;
+  max-height: 80vh;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+
+.qr-preview{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,.04);
+  cursor:pointer;
+}
+.qr-preview:hover{
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.col-center{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.scan-media{
+  max-width: 360px;
+  width: 100%;
+}
+
+.ratio-qr{
+  aspect-ratio: 500 / 350;
+}
+
+.preview-img{
+  width: 100%;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.preview-sm{ max-width: 200px; }
+.preview-md{ max-width: 240px; }
+
+.fw-900{ font-weight: 900; }
+.fw-800{ font-weight: 800; }

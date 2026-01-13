@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axiosClient';
+import StatusChip from '../../components/StatusChip';
 
 export default function TeacherClassDetail() {
   const { id } = useParams();
@@ -58,7 +59,7 @@ export default function TeacherClassDetail() {
           <p>
             <strong>{classInfo.className}</strong> – Mã lớp: <code>{classInfo.code}</code>
           </p>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div className="flex">
             <Link to={`/teacher/classes/${id}/report`}>Xem báo cáo</Link>
             <button className="btn btnDanger btnSm" onClick={deleteClass}>
               Xóa lớp
@@ -73,8 +74,8 @@ export default function TeacherClassDetail() {
         {members.length > 0 && (
           <ul>
             {members.map((m) => (
-              <li key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
+              <li key={m.id} className="flex justify-between">
+                <div>
                   <b>{m.fullName}</b> — {m.email}
                 </div>
                 <button className="btn btnDanger btnSm" onClick={() => removeMember(m.id)}>
@@ -88,7 +89,7 @@ export default function TeacherClassDetail() {
 
       <div className="card">
         <h3>Buổi học</h3>
-        <form onSubmit={createSession} className="row" style={{ marginBottom: '1rem' }}>
+        <form onSubmit={createSession} className="row mb-3">
           <input
             className="input"
             placeholder="Tiêu đề (Tuần 3 - Tiết 1)"
@@ -105,14 +106,34 @@ export default function TeacherClassDetail() {
         </form>
 
         {sessions.length === 0 && <p>Chưa có buổi học.</p>}
-        {sessions.map((s) => (
-          <div key={s.id} style={{ marginBottom: '0.5rem' }}>
-            <Link to={`/teacher/sessions/${s.id}`}>
-              {s.title} – {new Date(s.sessionDate).toLocaleString()} – {s.status}
-            </Link>
-          </div>
-        ))}
-      </div>
+        {sessions.length > 0 && (
+          <ul>
+            {sessions.map((s) => {
+              const variant =
+                s.status === 'OPEN'
+                  ? 'success'
+                  : s.status === 'CLOSED'
+                  ? 'danger'
+                  : 'default';
+              const label =
+                s.status === 'OPEN'
+                  ? 'Đang mở'
+                  : s.status === 'CLOSED'
+                  ? 'Đã đóng'
+                  : s.status || '—';
+
+              return (
+                <li key={s.id} className="flex justify-between">
+                  <Link to={`/teacher/sessions/${s.id}`} className="fw-900">
+                    {s.title}
+                    <span className="muted"> — {new Date(s.sessionDate).toLocaleString()}</span>
+                  </Link>
+                  <StatusChip variant={variant} label={label} />
+                </li>
+              );
+            })}
+          </ul>
+        )}</div>
     </div>
   );
 }

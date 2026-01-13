@@ -79,13 +79,21 @@ export default function TeacherDashboard() {
 
           {classes.length === 0 && <p>Chưa có lớp nào, hãy tạo lớp mới.</p>}
 
-          {classes.map((c) => (
-            <div key={c.id} style={{ marginBottom: '0.5rem' }}>
-              <Link to={`/teacher/classes/${c.id}`}>
-                {c.className} <span className="text-muted">(Mã: {c.code})</span>
-              </Link>
-            </div>
-          ))}
+          {classes.length > 0 && (
+            <ul>
+              {classes.map((c) => (
+                <li key={c.id} className="flex justify-between">
+                  <Link to={`/teacher/classes/${c.id}`} className="fw-900">
+                    {c.className}
+                  </Link>
+                  <span className="chip" title="Mã lớp">
+                    <span className="dot" />
+                    {c.code}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>

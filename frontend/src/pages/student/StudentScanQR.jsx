@@ -256,7 +256,7 @@ export default function StudentScanQR() {
         <div className="scan-body">
           {step === 'scan' && (
             <>
-              <div className="scan-frame" style={{ aspectRatio: '500 / 350' }}>
+              <div className="scan-frame" className="ratio-qr">
                 <span className="scan-line" aria-hidden="true" />
                 <BarcodeScanner width={500} height={350} onUpdate={handleScanFromCamera} />
               </div>
@@ -270,8 +270,8 @@ export default function StudentScanQR() {
 
           {step === 'selfie' && (
             <>
-              <div className="flex" style={{ flexDirection: 'column', alignItems: 'center' }}>
-                <div className="scan-frame" style={{ maxWidth: 360 }}>
+              <div className="flex" className="col-center">
+                <div className="scan-frame scan-media">
                   <video ref={videoRef} autoPlay playsInline />
                 </div>
 
@@ -279,13 +279,7 @@ export default function StudentScanQR() {
                   <img
                     src={selfieDataUrl}
                     alt="Selfie preview"
-                    style={{
-                      width: '100%',
-                      maxWidth: 200,
-                      borderRadius: 16,
-                      border: '1px solid rgba(255,255,255,.18)',
-                      marginTop: 12,
-                    }}
+                    className="preview-img preview-sm"
                   />
                 )}
               </div>
@@ -349,12 +343,7 @@ export default function StudentScanQR() {
                   <img
                     src={resolveMediaUrl(attendance.photoUrl)}
                     alt="Đã gửi"
-                    style={{
-                      width: '100%',
-                      maxWidth: 240,
-                      borderRadius: 16,
-                      border: '1px solid rgba(255,255,255,.18)',
-                    }}
+                    className="preview-img preview-md"
                   />
                 </div>
               )}
