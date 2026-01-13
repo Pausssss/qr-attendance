@@ -538,7 +538,7 @@ label{ font-size: 13px; color: var(--muted); }
 .alert-danger{ border-color: rgba(255,92,122,.34); background: rgba(255,92,122,.10); }
 
 /* ---------- Modal (VIP) ---------- */
-.modal-backdrop{
+.qa-popup-backdrop{
   position: fixed;
   inset:0;
   background: rgba(0,0,0,.72);
@@ -550,7 +550,7 @@ label{ font-size: 13px; color: var(--muted); }
   backdrop-filter: blur(6px);
 }
 
-.modal{
+.qa-popup{
   width: min(760px, 100%);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-lg);
@@ -566,13 +566,13 @@ label{ font-size: 13px; color: var(--muted); }
 }
 
 /* Force popup visibility on all browsers */
-.modal{ position: relative; z-index: 10000; background: #fff !important; border: 1px solid rgba(0,0,0,.08) !important; }
-.modal-header{ background: #fff !important; }
-.modal-body{ background: #fff !important; }
-.modal, .modal *{ color: #111; }
+.qa-popup{ position: relative; z-index: 10000; background: #fff !important; border: 1px solid rgba(0,0,0,.08) !important; }
+.qa-popup-header{ background: #fff !important; }
+.qa-popup-body{ background: #fff !important; }
+.qa-popup, .qa-popup *{ color: #111; }
 
 /* QR zoom modal: stronger contrast so QR is always visible */
-.modal-qr{
+.qa-popup-qr{
   width: min(520px, 100%);
   /* make the card edge easier to see on dark overlay */
   box-shadow: 0 18px 70px rgba(0,0,0,.55);
@@ -591,7 +591,7 @@ label{ font-size: 13px; color: var(--muted); }
   .qr-zoom{ border-color: rgba(255,255,255,.22); }
 }
 
-.modal-header{
+.qa-popup-header{
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   display:flex;
@@ -599,8 +599,8 @@ label{ font-size: 13px; color: var(--muted); }
   justify-content:space-between;
   gap:12px;
 }
-.modal-body{ padding: 16px; }
-.modal-footer{
+.qa-popup-body{ padding: 16px; }
+.qa-popup-footer{
   padding: 14px 16px;
   border-top: 1px solid var(--border);
   display:flex;
