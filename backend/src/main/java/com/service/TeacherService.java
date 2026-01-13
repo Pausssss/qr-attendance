@@ -18,7 +18,6 @@ import com.util.SecurityUtil;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -102,97 +101,14 @@ public class TeacherService {
     return classRepo.save(cls);
   }
 
-  
-  @Transactional
   public Map<String, Object> deleteClass(Long classId) {
     ClassEntity cls = classRepo.findById(classId).orElse(null);
     if (cls == null || !Objects.equals(cls.getTeacherId(), currentTeacherId())) {
       throw new ApiException(HttpStatus.NOT_FOUND, "Class not found");
     }
 
-    // 1) delete attendance of all sessions in this class
-    var sessions = sessionRepo.findByClassId(classId);
-    if (sessions != null && !sessions.isEmpty()) {
-      var sessionIds = sessions.stream().map(SessionEntity::getId).toList();
-      attendanceRepo.deleteBySessionIdIn(sessionIds);
-    }
-
-    // 2) delete sessions
-    sessionRepo.deleteByClassId(classId);
-
-    // 3) delete roster (members)
-    classMemberRepo.deleteByClassId(classId);
-
-    // 4) delete class
     classRepo.delete(cls);
-
-    return Map.of("message", "Deleted class (members + sessions + attendance)");
-  }
-
-  @Transactional
-  public Map<String, Object> deleteSession(Long sessionId) {
-    SessionEntity session = sessionRepo.findById(sessionId).orElse(null);
-    if (session == null) throw new ApiException(HttpStatus.NOT_FOUND, "Session not found");
-
-    ClassEntity cls = classRepo.findById(session.getClassId()).orElse(null);
-    if (cls == null || !Objects.equals(cls.getTeacherId(), currentTeacherId())) {
-      throw new ApiException(HttpStatus.FORBIDDEN, "Forbidden");
-    }
-
-    attendanceRepo.deleteBySessionId(sessionId);
-    sessionRepo.delete(session);
-
-    return Map.of("message", "Deleted session and its attendance");
-  }
-
-  @Transactional
-  public Map<String, Object> manualAttendance(Long sessionId, TeacherDtos.ManualAttendanceRequest req) {
-    SessionEntity session = sessionRepo.findById(sessionId).orElse(null);
-    if (session == null) throw new ApiException(HttpStatus.NOT_FOUND, "Session not found");
-
-    ClassEntity cls = classRepo.findById(session.getClassId()).orElse(null);
-    if (cls == null || !Objects.equals(cls.getTeacherId(), currentTeacherId())) {
-      throw new ApiException(HttpStatus.FORBIDDEN, "Forbidden");
-    }
-
-    Long studentId = req.studentId();
-    if (studentId == null) throw new ApiException(HttpStatus.BAD_REQUEST, "studentId is required");
-
-    // only allow manual check-in for students in this class
-    if (!classMemberRepo.existsByClassIdAndStudentId(cls.getId(), studentId)) {
-      throw new ApiException(HttpStatus.BAD_REQUEST, "Student is not in this class");
-    }
-
-    var existing = attendanceRepo.findBySessionIdAndStudentId(sessionId, studentId).orElse(null);
-    if (existing != null) {
-      return Map.of(
-          "message", "Student already checked in",
-          "attendanceId", existing.getId(),
-          "status", existing.getStatus()
-      );
-    }
-
-    Attendance a = new Attendance();
-    a.setSessionId(sessionId);
-    a.setStudentId(studentId);
-    a.setCheckInTime(LocalDateTime.now());
-    a.setGpsLat(null);
-    a.setGpsLng(null);
-    a.setPhotoUrl(null);
-    // NOTE: DB thường khai báo status là ENUM (ON_TIME/LATE/ABSENT).
-    // Nếu lưu giá trị lạ sẽ bị lỗi "Data truncated for column 'status'".
-    // Điểm danh thủ công sẽ được tính như có mặt đúng giờ.
-    a.setStatus(AttendanceStatus.ON_TIME);
-
-    Attendance saved = attendanceRepo.save(a);
-
-    return new LinkedHashMap<>(Map.of(
-        "message", "Manual check-in saved",
-        "attendanceId", saved.getId(),
-        "studentId", saved.getStudentId(),
-        "sessionId", saved.getSessionId(),
-        "status", saved.getStatus()
-    ));
+    return Map.of("message", "Deleted");
   }
 
   /**

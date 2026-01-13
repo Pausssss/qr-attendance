@@ -50,10 +50,4 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     WHERE s.classId = :classId
   """)
   List<Object[]> findByClassWithSession(@Param("classId") Long classId);
-  // Delete all attendance by session
-  void deleteBySessionId(Long sessionId);
-
-  // Delete all attendance by sessions
-  void deleteBySessionIdIn(java.util.List<Long> sessionIds);
-
 }

@@ -17,10 +17,4 @@ public interface SessionRepository extends JpaRepository<SessionEntity, Long> {
 
   /** Lấy danh sách buổi học của 1 lớp (cũ nhất trước). */
   List<SessionEntity> findByClassIdOrderBySessionDateAsc(Long classId);
-  // List sessions by class (unordered)
-  List<SessionEntity> findByClassId(Long classId);
-
-  // Delete sessions by class
-  void deleteByClassId(Long classId);
-
 }

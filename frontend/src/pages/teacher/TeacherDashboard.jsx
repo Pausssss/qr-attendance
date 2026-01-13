@@ -30,7 +30,9 @@ export default function TeacherDashboard() {
       setMessage('Tạo lớp thành công!');
     } catch (err) {
       console.error(err);
-      setMessage(err.response?.data?.message || 'Không thể tạo lớp, vui lòng thử lại.');
+      setMessage(
+        err.response?.data?.message || 'Không thể tạo lớp, vui lòng thử lại.'
+      );
     } finally {
       setLoading(false);
     }
@@ -38,63 +40,33 @@ export default function TeacherDashboard() {
 
   return (
     <div>
-      <div className="hero">
-        <div className="hero-card">
-          <h1 className="hero-title">Trang giảng viên</h1>
-          <p className="hero-sub">
-            Tạo lớp, quản lý sinh viên, mở/đóng điểm danh và xem báo cáo.
-          </p>
-        </div>
+      <h2>Trang giáo viên</h2>
+
+      <div className="card">
+        <h3>Tạo lớp mới</h3>
+        <form onSubmit={handleCreateClass}>
+          <input
+            placeholder="Tên lớp (VD: Lập trình Web 1)"
+            value={newClassName}
+            onChange={(e) => setNewClassName(e.target.value)}
+          />
+          <button type="submit" disabled={loading} style={{ marginLeft: '0.5rem' }}>
+            {loading ? 'Đang tạo...' : 'Tạo lớp'}
+          </button>
+        </form>
+        {message && <p style={{ marginTop: '0.5rem' }}>{message}</p>}
       </div>
 
-      <div className="card-grid">
-        <div className="card col-6">
-          <div className="card-title">
-            <h3>Tạo lớp mới</h3>
+      <div className="card mb-3">
+        <h3 className="mb-3">Danh sách lớp</h3>
+        {classes.map((c) => (
+          <div key={c.id} style={{ marginBottom: '0.5rem' }}>
+            <Link to={`/teacher/classes/${c.id}`}>
+              {c.className} (Mã: {c.code})
+            </Link>
           </div>
-
-          <form onSubmit={handleCreateClass} className="row">
-            <input
-              className="input"
-              placeholder="Tên lớp (VD: Lập trình Web 1)"
-              value={newClassName}
-              onChange={(e) => setNewClassName(e.target.value)}
-            />
-            <button className="btn btn-primary" type="submit" disabled={loading}>
-              {loading ? 'Đang tạo...' : 'Tạo lớp'}
-            </button>
-          </form>
-
-          {message && (
-            <div className={message.includes('thành công') ? 'alert alert-success mt-2' : 'alert alert-danger mt-2'}>
-              {message}
-            </div>
-          )}
-        </div>
-
-        <div className="card col-6">
-          <div className="card-title">
-            <h3>Danh sách lớp</h3>
-          </div>
-
-          {classes.length === 0 && <p>Chưa có lớp nào, hãy tạo lớp mới.</p>}
-
-          {classes.length > 0 && (
-            <ul>
-              {classes.map((c) => (
-                <li key={c.id} className="flex justify-between">
-                  <Link to={`/teacher/classes/${c.id}`} className="fw-900">
-                    {c.className}
-                  </Link>
-                  <span className="chip" title="Mã lớp">
-                    <span className="dot" />
-                    {c.code}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        ))}
+        {classes.length === 0 && <p>Chưa có lớp nào, hãy tạo lớp mới.</p>}
       </div>
     </div>
   );

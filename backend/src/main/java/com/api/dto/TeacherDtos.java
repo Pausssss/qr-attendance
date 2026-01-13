@@ -18,10 +18,4 @@ public class TeacherDtos {
       @NotNull Double teacherLat,
       @NotNull Double teacherLng
   ) {}
-
-  /** Giảng viên điểm danh thủ công cho 1 sinh viên trong 1 buổi học. */
-  public record ManualAttendanceRequest(
-      @NotNull Long studentId,
-      String note
-  ) {}
 }

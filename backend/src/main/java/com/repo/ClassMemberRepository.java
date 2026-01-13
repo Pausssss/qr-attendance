@@ -46,7 +46,4 @@ public interface ClassMemberRepository extends JpaRepository<ClassMember, Long> 
     ORDER BY u.fullName ASC
   """)
   List<Object[]> findStudentsByClass(@Param("classId") Long classId);
-  // Delete all members of a class
-  void deleteByClassId(Long classId);
-
 }

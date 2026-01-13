@@ -116,7 +116,7 @@ export default function App() {
   return (
     <div className="app">
       <Navbar />
-      <main className="container">
+      <main className="container" style={{ paddingTop: 18, paddingBottom: 28 }}>
         <AppRoutes />
       </main>
     </div>

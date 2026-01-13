@@ -28,8 +28,7 @@ function resolveMediaUrl(url) {
   // backend trả về "/uploads/..." -> cần prefix baseURL để load được trên domain frontend
   if (typeof url === 'string' && url.startsWith('/uploads/')) {
     const base = (api.defaults.baseURL || '').replace(/\/+$/, '');
-    const origin = base.replace(/\/api\/?$/, '');
-    return `${origin}${url}`;
+    return `${base}${url}`;
   }
   return url;
 }
@@ -41,7 +40,6 @@ export default function StudentScanQR() {
   const [message, setMessage] = useState('');
   const [payload, setPayload] = useState(null); // dữ liệu từ QR {sessionId, qrToken}
   const [attendance, setAttendance] = useState(null);
-  const [distanceInfo, setDistanceInfo] = useState({ distanceMeters: null, maxDistanceMeters: null });
   const [selfieDataUrl, setSelfieDataUrl] = useState(null);
 
   const videoRef = useRef(null);
@@ -193,20 +191,11 @@ export default function StudentScanQR() {
           setStatus('success');
           setMessage('Điểm danh thành công!');
           setAttendance(res.data.attendance || null);
-          setDistanceInfo({
-            distanceMeters: res.data?.distanceMeters ?? null,
-            maxDistanceMeters: res.data?.maxDistanceMeters ?? null,
-          });
           setStep('done');
           stopCamera();
         } catch (err) {
           console.error(err);
           setStatus('error');
-          // Nếu backend có trả thêm distanceMeters/maxDistanceMeters trong lỗi, mình lưu lại để hiển thị cho dễ debug
-          const d = err.response?.data?.distanceMeters ?? null;
-          const m = err.response?.data?.maxDistanceMeters ?? null;
-          setDistanceInfo({ distanceMeters: d, maxDistanceMeters: m });
-
           setMessage(
             err.response?.data?.message ||
               'Không điểm danh được. Hãy thử lại hoặc liên hệ giảng viên.'
@@ -228,133 +217,146 @@ export default function StudentScanQR() {
     setPayload(null);
     setAttendance(null);
     setSelfieDataUrl(null);
-    setDistanceInfo({ distanceMeters: null, maxDistanceMeters: null });
   };
 
   return (
-    <div className="scan-wrap">
-      <div className="scan-card">
-        <div className="scan-head">
-          <div>
-            <h2 className="scan-title">Điểm danh QR</h2>
-            <p className="scan-sub">
-              {step === 'scan'
-                ? 'Hướng camera vào mã QR mà giảng viên đang chiếu.'
-                : step === 'selfie'
-                ? 'Chụp hình khuôn mặt để xác thực điểm danh.'
-                : 'Hoàn tất điểm danh.'}
+    <div>
+      <h2>Quét mã QR để điểm danh</h2>
+
+      <div className="card">
+        {step === 'scan' && (
+          <>
+            <p className="text-muted">
+               Hướng camera vào mã QR mà giảng viên đang chiếu.
             </p>
-          </div>
 
-          {step !== 'scan' && (
-            <button type="button" className="btn btn-ghost btn-sm" onClick={resetAll}>
-              Làm lại
-            </button>
-          )}
-        </div>
+            <div style={{ marginTop: '1rem', marginBottom: '1rem' }}>
+              <BarcodeScanner
+                width={500}
+                height={350}
+                onUpdate={handleScanFromCamera}
+              />
+            </div>
 
-        <div className="scan-body">
-          {step === 'scan' && (
-            <>
-		      <div className="scan-frame ratio-qr">
-                <span className="scan-line" aria-hidden="true" />
-                <BarcodeScanner width={500} height={350} onUpdate={handleScanFromCamera} />
-              </div>
+            {status === 'error' && (
+              <p style={{ color: '#b91c1c' }}>{message}</p>
+            )}
+            {status === 'idle' && (
+              <p className="text-muted mt-2">Đang chờ bạn quét mã...</p>
+            )}
+          </>
+        )}
 
-              <div className="spacer" />
-
-              {status === 'error' && <div className="alert alert-danger">{message}</div>}
-              {status === 'idle' && <p className="text-muted">Đang chờ bạn quét mã...</p>}
-            </>
-          )}
-
-          {step === 'selfie' && (
-            <>
-		      <div className="flex col-center">
-                <div className="scan-frame scan-media">
-                  <video ref={videoRef} autoPlay playsInline />
-                </div>
-
-                {selfieDataUrl && (
-                  <img
-                    src={selfieDataUrl}
-                    alt="Selfie preview"
-                    className="preview-img preview-sm"
-                  />
-                )}
-              </div>
-
-              <div className="spacer" />
-
-              <div className="flex justify-between">
-                <div className="flex">
-                  <button type="button" className="btn btn-secondary" onClick={handleCaptureSelfie}>
-                    Chụp ảnh
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handleSubmitAttendance}
-                    disabled={status === 'loading' || !selfieDataUrl}
-                  >
-                    {status === 'loading' ? 'Đang gửi...' : 'Gửi điểm danh'}
-                  </button>
-                </div>
-
-                <button type="button" className="btn btn-ghost" onClick={resetAll}>
-                  Quét lại
-                </button>
-              </div>
-
-              {message && (
-                <div className={status === 'error' ? 'alert alert-danger mt-2' : 'alert mt-2'}>
-                  {message}
-                </div>
+        {step === 'selfie' && (
+          <>
+            <p className="text-muted">
+              Chụp hình khuôn mặt bạn để xác thực điểm danh.
+            </p>
+            <div
+              style={{
+                marginTop: '1rem',
+                marginBottom: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '0.75rem',
+              }}
+            >
+              <video
+                ref={videoRef}
+                style={{
+                  width: '100%',
+                  maxWidth: 360,
+                  borderRadius: 16,
+                  backgroundColor: '#000',
+                }}
+                autoPlay
+                playsInline
+              />
+              {selfieDataUrl && (
+                <img
+                  src={selfieDataUrl}
+                  alt="Selfie preview"
+                  style={{
+                    width: '100%',
+                    maxWidth: 200,
+                    borderRadius: 16,
+                    border: '1px solid #e5e7eb',
+                  }}
+                />
               )}
-            </>
-          )}
+            </div>
 
-          {step === 'done' && (
-            <>
-              <div className="alert alert-success">
-                <strong>✅ Điểm danh thành công</strong>
-                <div className="spacer" />
-                <div>{message}</div>
-              </div>
-
-              {attendance && (
-                <p className="text-muted mt-2">
-                  Trạng thái: <strong>{attendance.status === 'ON_TIME' ? 'Đúng giờ' : 'Đi trễ'}</strong> – Lúc:{' '}
-                  {attendance.checkInTime ? new Date(attendance.checkInTime).toLocaleString() : '—'}
-                </p>
-              )}
-
-              {(distanceInfo.distanceMeters !== null || distanceInfo.maxDistanceMeters !== null) && (
-                <p className="text-muted">
-                  Khoảng cách tới vị trí lớp: <strong>{distanceInfo.distanceMeters !== null ? `${distanceInfo.distanceMeters}m` : '—'}</strong>
-                  {distanceInfo.maxDistanceMeters !== null ? ` (tối đa ${distanceInfo.maxDistanceMeters}m)` : ''}
-                </p>
-              )}
-
-              {attendance?.photoUrl && (
-                <div className="mt-2">
-                  <p className="text-muted">Ảnh đã gửi:</p>
-                  <img
-                    src={resolveMediaUrl(attendance.photoUrl)}
-                    alt="Đã gửi"
-                    className="preview-img preview-md"
-                  />
-                </div>
-              )}
-
-              <div className="spacer" />
-              <button className="btn btn-primary" onClick={resetAll}>
-                Quét tiếp buổi khác
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button type="button" onClick={handleCaptureSelfie}>
+                Chụp ảnh
               </button>
-            </>
-          )}
-        </div>
+              <button
+                type="button"
+                onClick={handleSubmitAttendance}
+                disabled={status === 'loading' || !selfieDataUrl}
+              >
+                {status === 'loading' ? 'Đang gửi...' : 'Gửi điểm danh'}
+              </button>
+              <button
+                type="button"
+                className="secondary"
+                onClick={resetAll}
+                style={{ marginLeft: 'auto' }}
+              >
+                Quét lại từ đầu
+              </button>
+            </div>
+
+            {message && (
+              <p
+                className="mt-2"
+                style={{ color: status === 'error' ? '#b91c1c' : '#6b7280' }}
+              >
+                {message}
+              </p>
+            )}
+          </>
+        )}
+
+        {step === 'done' && (
+          <>
+            <h3 style={{ color: '#16a34a', marginBottom: '0.25rem' }}>
+              ✅ Điểm danh thành công
+            </h3>
+            <p>{message}</p>
+            {attendance && (
+              <p className="text-muted">
+                Trạng thái:{' '}
+                <strong>
+                  {attendance.status === 'ON_TIME' ? 'Đúng giờ' : 'Đi trễ'}
+                </strong>{' '}
+                – Lúc:{' '}
+                {attendance.checkInTime
+                  ? new Date(attendance.checkInTime).toLocaleString()
+                  : '—'}
+              </p>
+            )}
+            {attendance?.photoUrl && (
+              <div className="mt-2">
+                <p className="text-muted">Ảnh đã gửi:</p>
+                <img
+                  src={resolveMediaUrl(attendance.photoUrl)}
+                  alt="Đã gửi"
+                  style={{
+                    width: '100%',
+                    maxWidth: 200,
+                    borderRadius: 16,
+                    border: '1px solid #e5e7eb',
+                  }}
+                />
+              </div>
+            )}
+            <button className="mt-3" onClick={resetAll}>
+              Quét tiếp buổi khác
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

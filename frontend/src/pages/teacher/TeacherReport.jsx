@@ -17,7 +17,7 @@ export default function TeacherReport() {
   if (!report) return <p>Đang tải...</p>;
 
   return (
-    <div className="container">
+    <div>
       <h2>Báo cáo lớp</h2>
       <div className="card">
         <p>
@@ -30,7 +30,7 @@ export default function TeacherReport() {
 
       <div className="card">
         <h3>Theo sinh viên</h3>
-        <table className="table">
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               <th>Sinh viên</th>
