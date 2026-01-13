@@ -256,7 +256,7 @@ export default function StudentScanQR() {
         <div className="scan-body">
           {step === 'scan' && (
             <>
-              <div className="scan-frame" className="ratio-qr">
+		      <div className="scan-frame ratio-qr">
                 <span className="scan-line" aria-hidden="true" />
                 <BarcodeScanner width={500} height={350} onUpdate={handleScanFromCamera} />
               </div>
@@ -270,7 +270,7 @@ export default function StudentScanQR() {
 
           {step === 'selfie' && (
             <>
-              <div className="flex" className="col-center">
+		      <div className="flex col-center">
                 <div className="scan-frame scan-media">
                   <video ref={videoRef} autoPlay playsInline />
                 </div>

@@ -181,12 +181,11 @@ export default function TeacherSessionDetail() {
           </button>
         </div>
 
-        {qrPayload && session.status === 'OPEN' && (
-          <div className="qr-preview" onClick={() => setShowQrModal(true)}>
-              <QRCodeCanvas value={JSON.stringify(qrPayload)} size={180} />
-            </div>
-          </div>
-        )}
+		{qrPayload && session.status === 'OPEN' && (
+		  <div className="qr-preview" onClick={() => setShowQrModal(true)}>
+		    <QRCodeCanvas value={JSON.stringify(qrPayload)} size={180} />
+		  </div>
+		)}
       </div>
       {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
