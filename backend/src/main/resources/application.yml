@@ -1,6 +1,6 @@
 server:
   address: 0.0.0.0
-  port: ${PORT:10000}
+  port: ${PORT:4000}  # local default; Render/Docker will override via PORT
 
 spring:
   jackson:
@@ -9,9 +9,10 @@ spring:
     url: ${SPRING_DATASOURCE_URL:}
     username: ${SPRING_DATASOURCE_USERNAME:}
     password: ${SPRING_DATASOURCE_PASSWORD:}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.postgresql.Driver
 
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
     open-in-view: false

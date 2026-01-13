@@ -31,27 +31,60 @@ export default function StudentDashboard() {
 
   return (
     <div>
-      <h2>Lớp học của tôi</h2>
-      <div className="card mb-3">
-        <h3>Tham gia lớp bằng mã</h3>
-        <form onSubmit={joinClass}>
-          <input
-            placeholder="Nhập mã lớp"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-          />
-          <button>Tham gia</button>
-        </form>
-        {message && <p>{message}</p>}
+      <div className="hero">
+        <div className="hero-card">
+          <h1 className="hero-title">Lớp học của tôi</h1>
+          <p className="hero-sub">
+            Tham gia lớp bằng mã, xem các buổi học và lịch sử điểm danh.
+          </p>
+        </div>
       </div>
 
-      <div className="card">
-        <h3>Danh sách lớp</h3>
-        {classes.map((c) => (
-          <div key={c.id} style={{ marginBottom: '0.5rem' }}>
-            <Link to={`/student/classes/${c.id}`}>{c.className}</Link>
+      <div className="card-grid">
+        <div className="card col-6">
+          <div className="card-title">
+            <h3>Tham gia lớp bằng mã</h3>
           </div>
-        ))}
+
+          <form onSubmit={joinClass} className="row">
+            <input
+              className="input"
+              placeholder="Nhập mã lớp"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+            />
+            <button className="btn btn-primary" type="submit">
+              Tham gia
+            </button>
+          </form>
+
+          {message && (
+            <div className={message.includes('thành công') ? 'alert alert-success mt-2' : 'alert alert-danger mt-2'}>
+              {message}
+            </div>
+          )}
+        </div>
+
+        <div className="card col-6">
+          <div className="card-title">
+            <h3>Danh sách lớp</h3>
+          </div>
+
+          {classes.length === 0 && <p>Chưa có lớp nào.</p>}
+
+          {classes.length > 0 && (
+            <ul>
+              {classes.map((c) => (
+                <li key={c.id} className="flex justify-between">
+                  <Link to={`/student/classes/${c.id}`} className="fw-800">
+                    {c.className}
+                  </Link>
+                  <span className="muted">ID: {c.id}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );

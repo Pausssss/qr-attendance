@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import api from '../../api/axiosClient';
+import StatusChip from '../../components/StatusChip';
 
 export default function StudentClassDetail() {
   const { id } = useParams(); // classId
@@ -66,12 +67,30 @@ export default function StudentClassDetail() {
         )}
         {!loadingSessions && sessions.length > 0 && (
           <ul>
-            {sessions.map((s) => (
-              <li key={s.id}>
-                {s.title} – {new Date(s.sessionDate).toLocaleString()} –{' '}
-                {s.status}
-              </li>
-            ))}
+            {sessions.map((s) => {
+              const variant =
+                s.status === 'OPEN'
+                  ? 'success'
+                  : s.status === 'CLOSED'
+                  ? 'danger'
+                  : 'default';
+              const label =
+                s.status === 'OPEN'
+                  ? 'Đang mở'
+                  : s.status === 'CLOSED'
+                  ? 'Đã đóng'
+                  : s.status || '—';
+
+              return (
+                <li key={s.id} className="flex justify-between">
+                  <div>
+                    <div className="fw-900">{s.title}</div>
+                    <div className="muted">{new Date(s.sessionDate).toLocaleString()}</div>
+                  </div>
+                  <StatusChip variant={variant} label={label} />
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -114,11 +114,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <div>
+    <div className="app">
       <Navbar />
-      <div className="container">
+      <main className="container">
         <AppRoutes />
-      </div>
+      </main>
     </div>
   );
 }

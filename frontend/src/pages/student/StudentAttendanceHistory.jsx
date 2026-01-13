@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../api/axiosClient';
+import StatusChip from '../../components/StatusChip';
 
 export default function StudentAttendanceHistory() {
   const { id } = useParams(); // classId
@@ -42,7 +43,7 @@ export default function StudentAttendanceHistory() {
   }, [id]);
 
   return (
-    <div>
+    <div className="container">
       <h2>Lịch sử điểm danh</h2>
 
       <div className="card">
@@ -59,7 +60,7 @@ export default function StudentAttendanceHistory() {
         <p className="text-muted">
           Xem lại các buổi học và trạng thái điểm danh của bạn trong lớp này.
         </p>
-        <Link to={`/student/classes/${id}`} className="mt-2">
+        <Link to={`/student/classes/${id}`} className="btn btnSm mt-2">
           ← Quay lại chi tiết lớp
         </Link>
       </div>
@@ -72,7 +73,7 @@ export default function StudentAttendanceHistory() {
         )}
 
         {!loading && history.length > 0 && (
-          <table>
+          <table className="table">
             <thead>
               <tr>
                 <th>Buổi</th>
@@ -91,11 +92,15 @@ export default function StudentAttendanceHistory() {
                       : '—'}
                   </td>
                   <td>
-                    {row.status
-                      ? row.status === 'ON_TIME'
-                        ? 'Đúng giờ'
-                        : 'Đi trễ'
-                      : 'Chưa điểm danh'}
+                    {row.status ? (
+                      row.status === 'ON_TIME' ? (
+                        <StatusChip variant="success" label="Đúng giờ" />
+                      ) : (
+                        <StatusChip variant="warning" label="Đi trễ" />
+                      )
+                    ) : (
+                      <StatusChip variant="danger" label="Chưa điểm danh" />
+                    )}
                   </td>
                   <td>
                     {row.checkInTime
