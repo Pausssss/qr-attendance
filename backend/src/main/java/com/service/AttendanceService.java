@@ -20,6 +20,8 @@ import java.util.Map;
 
 @Service
 public class AttendanceService {
+
+  // Ngưỡng điểm danh theo GPS (m)
   private static final double MAX_DISTANCE_METERS = 50.0;
 
   private final SessionRepository sessionRepo;
@@ -43,6 +45,7 @@ public class AttendanceService {
     return cu.getId();
   }
   /**
+   * Sinh viên điểm danh bằng QR.
    * @param sessionId id buổi học
    * @param qrToken token từ QR do giảng viên tạo
    * @param gpsLat vĩ độ hiện tại của sinh viên
@@ -56,6 +59,7 @@ public class AttendanceService {
     Double gpsLng = req.gpsLng();
     String photoUrl = req.photoUrl();
 
+    // Tránh client gửi base64 cực dài (data:image/...;base64,...) gây quá tải DB.
     if (photoUrl != null && photoUrl.startsWith("data:")) {
       throw new ApiException(HttpStatus.BAD_REQUEST,
           "Ảnh quá lớn. Vui lòng upload ảnh trước (/api/upload/photo) và gửi lại photoUrl dạng /uploads/...");
@@ -78,16 +82,25 @@ public class AttendanceService {
     }
 
     // distance check (if teacher gps exists)
-    if (session.getTeacherLat() != null && session.getTeacherLng() != null) {
+    Double distanceMeters = null;
+    if (session.getTeacherLat() != null && session.getTeacherLng() != null
+        && gpsLat != null && gpsLng != null) {
       double dist = distanceInMeters(
           session.getTeacherLat().doubleValue(),
           session.getTeacherLng().doubleValue(),
           gpsLat,
           gpsLng
       );
+      distanceMeters = dist;
       if (dist > MAX_DISTANCE_METERS) {
-        throw new ApiException(HttpStatus.BAD_REQUEST,
-            "Bạn đang ở quá xa vị trí lớp học, không thể điểm danh (≈ " + Math.round(dist) + " m).");
+        throw new ApiException(
+            HttpStatus.BAD_REQUEST,
+            "Bạn đang ở quá xa vị trí lớp học, không thể điểm danh (≈ " + Math.round(dist) + " m).",
+            Map.of(
+                "distanceMeters", Math.round(dist),
+                "maxDistanceMeters", Math.round(MAX_DISTANCE_METERS)
+            )
+        );
       }
     }
 
@@ -104,7 +117,7 @@ public class AttendanceService {
     LocalDateTime onTimeBoundary = session.getSessionDate().plusMinutes(onTimeMinutes);
     AttendanceStatus status = now.isAfter(onTimeBoundary) ? AttendanceStatus.LATE : AttendanceStatus.ON_TIME;
 
-    // Tạo bản ghi điểm danh (không dùng Lombok)
+        // Tạo bản ghi điểm danh (không dùng Lombok)
     Attendance att = new Attendance();
     att.setSessionId(sessionId);
     att.setStudentId(studentId());
@@ -118,7 +131,9 @@ att = attendanceRepo.save(att);
 
     return Map.of(
         "message", "Check-in success",
-        "attendance", att
+        "attendance", att,
+        "distanceMeters", distanceMeters == null ? null : Math.round(distanceMeters),
+        "maxDistanceMeters", Math.round(MAX_DISTANCE_METERS)
     );
   }
 

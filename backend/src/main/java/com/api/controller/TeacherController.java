@@ -1,4 +1,3 @@
-
 package com.api.controller;
 
 import com.api.dto.TeacherDtos;
@@ -16,8 +15,9 @@ import java.util.Map;
 /**
  * API cho giảng viên:
  * - Quản lý lớp
- * - Tạo session
- * - Mở/đóng điểm danh và xem báo cáo
+ * - Quản lý buổi học (session)
+ * - Mở/đóng điểm danh + xem báo cáo
+ * - Điểm danh thủ công (fallback)
  */
 @RestController
 @RequestMapping("/api/teacher")
@@ -30,6 +30,9 @@ public class TeacherController {
     this.teacherService = teacherService;
   }
 
+  // =====================
+  // CLASSES
+  // =====================
   @GetMapping("/classes")
   public List<ClassEntity> getMyClasses() {
     return teacherService.getMyClasses();
@@ -42,10 +45,12 @@ public class TeacherController {
   }
 
   @PutMapping("/classes/{id}")
-  public ClassEntity updateClass(@PathVariable Long id, @Valid @RequestBody TeacherDtos.UpdateClassRequest req) {
+  public ClassEntity updateClass(@PathVariable Long id,
+                                 @Valid @RequestBody TeacherDtos.UpdateClassRequest req) {
     return teacherService.updateClass(id, req);
   }
 
+  /** Xóa lớp (bao gồm members + sessions + attendance). */
   @DeleteMapping("/classes/{id}")
   public Map<String, Object> deleteClass(@PathVariable Long id) {
     return teacherService.deleteClass(id);
@@ -56,9 +61,18 @@ public class TeacherController {
     return teacherService.getClassMembers(id);
   }
 
+  @DeleteMapping("/classes/{classId}/members/{memberId}")
+  public Map<String, Object> removeMember(@PathVariable Long classId, @PathVariable Long memberId) {
+    return teacherService.removeMember(classId, memberId);
+  }
+
+  // =====================
+  // SESSIONS
+  // =====================
   @PostMapping("/classes/{id}/sessions")
   @ResponseStatus(HttpStatus.CREATED)
-  public SessionEntity createSession(@PathVariable Long id, @Valid @RequestBody TeacherDtos.CreateSessionRequest req) {
+  public SessionEntity createSession(@PathVariable Long id,
+                                     @Valid @RequestBody TeacherDtos.CreateSessionRequest req) {
     return teacherService.createSession(id, req);
   }
 
@@ -67,8 +81,15 @@ public class TeacherController {
     return teacherService.getSessions(id);
   }
 
+  /** Xóa 1 buổi học (session) + xóa toàn bộ attendance trong buổi đó. */
+  @DeleteMapping("/sessions/{sessionId}")
+  public Map<String, Object> deleteSession(@PathVariable Long sessionId) {
+    return teacherService.deleteSession(sessionId);
+  }
+
   @PutMapping("/sessions/{sessionId}/open")
-  public Map<String, Object> openSession(@PathVariable Long sessionId, @Valid @RequestBody TeacherDtos.OpenSessionRequest req) {
+  public Map<String, Object> openSession(@PathVariable Long sessionId,
+                                         @Valid @RequestBody TeacherDtos.OpenSessionRequest req) {
     return teacherService.openSession(sessionId, req);
   }
 
@@ -77,18 +98,23 @@ public class TeacherController {
     return teacherService.closeSession(sessionId);
   }
 
+  /** Điểm danh thủ công cho sinh viên trong buổi học. */
+  @PostMapping("/sessions/{sessionId}/manual-attendance")
+  public Map<String, Object> manualAttendance(@PathVariable Long sessionId,
+                                              @Valid @RequestBody TeacherDtos.ManualAttendanceRequest req) {
+    return teacherService.manualAttendance(sessionId, req);
+  }
+
   @GetMapping("/sessions/{sessionId}/attendance")
   public List<Map<String, Object>> attendance(@PathVariable Long sessionId) {
     return teacherService.getSessionAttendance(sessionId);
   }
 
+  // =====================
+  // REPORT
+  // =====================
   @GetMapping("/classes/{id}/report")
   public Map<String, Object> report(@PathVariable Long id) {
     return teacherService.getClassReport(id);
   }
-
-  @DeleteMapping("/classes/{classId}/members/{memberId}")
-  public Map<String, Object> removeMember(@PathVariable Long classId, @PathVariable Long memberId) {
-  return teacherService.removeMember(classId, memberId);
-}
 }

@@ -38,7 +38,15 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(ApiException.class)
   public ResponseEntity<Map<String, Object>> handle(ApiException ex) {
-    return ResponseEntity.status(ex.getStatus()).body(Map.of("message", ex.getMessage()));
+    if (ex.getDetails() == null || ex.getDetails().isEmpty()) {
+      return ResponseEntity.status(ex.getStatus()).body(Map.of("message", ex.getMessage()));
+    }
+
+    // merge message + details
+    java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+    body.put("message", ex.getMessage());
+    body.putAll(ex.getDetails());
+    return ResponseEntity.status(ex.getStatus()).body(body);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
