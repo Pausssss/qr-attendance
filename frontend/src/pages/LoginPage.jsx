@@ -14,8 +14,8 @@ export default function LoginPage() {
         </p>
 
         <div className="card" style={{ marginTop: 14 }}>
-          <form className="form" onSubmit={(e) => e.preventDefault()}>
-            <div>
+          <form className="form login-form" onSubmit={(e) => e.preventDefault()}>
+            <div className="login-field">
               <label>Vai trò</label>
               <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="STUDENT">Sinh viên</option>
@@ -23,7 +23,8 @@ export default function LoginPage() {
               </select>
             </div>
 
-            <div>
+            <div className="login-field">
+              <label>Đăng nhập</label>
               <GoogleLoginButton role={role} />
             </div>
           </form>

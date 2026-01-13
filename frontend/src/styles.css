@@ -428,6 +428,20 @@ main{ flex:1; }
 .form{ display:grid; gap: 12px; }
 label{ font-size: 13px; color: var(--muted); }
 
+/* Login page: keep role select + google button aligned and responsive */
+.login-form{
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 14px;
+  align-items: end;
+}
+.login-field label{ display:block; margin-bottom: 6px; }
+.google-btn-wrap{ width: 100%; }
+.google-btn-wrap > div{ width: 100%; }
+@media (max-width: 720px){
+  .login-form{ grid-template-columns: 1fr; }
+}
+
 .input, select, textarea{
   width:100%;
   padding: 11px 12px;
@@ -527,12 +541,12 @@ label{ font-size: 13px; color: var(--muted); }
 .modal-backdrop{
   position: fixed;
   inset:0;
-  background: rgba(0,0,0,.58);
+  background: rgba(0,0,0,.72);
   display:flex;
   align-items:center;
   justify-content:center;
   padding: 18px;
-  z-index:100;
+  z-index:200;
   backdrop-filter: blur(6px);
 }
 
@@ -549,6 +563,26 @@ label{ font-size: 13px; color: var(--muted); }
 
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+/* QR zoom modal: stronger contrast so QR is always visible */
+.modal-qr{
+  width: min(520px, 100%);
+  /* make the card edge easier to see on dark overlay */
+  box-shadow: 0 18px 70px rgba(0,0,0,.55);
+}
+.qr-zoom{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: #fff;
+  border: 1px solid rgba(0,0,0,.10);
+  box-shadow: var(--shadow-md);
+}
+@media (prefers-color-scheme: dark){
+  .qr-zoom{ border-color: rgba(255,255,255,.22); }
 }
 
 .modal-header{

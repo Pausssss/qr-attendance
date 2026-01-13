@@ -202,7 +202,7 @@ export default function TeacherSessionDetail() {
       {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
         <div className="modal-backdrop" onClick={() => setShowQrModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal modal-qr" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ margin: 0 }}>Quét mã QR</h3>
               <button
@@ -213,11 +213,16 @@ export default function TeacherSessionDetail() {
               </button>
             </div>
             <div className="modal-body" style={{ textAlign: "center" }}>
-              <QRCodeCanvas
-                value={JSON.stringify(qrPayload)}
-                size={340}
-                includeMargin={true}
-              />
+              <div className="qr-zoom">
+                <QRCodeCanvas
+                  value={JSON.stringify(qrPayload)}
+                  size={360}
+                  includeMargin={true}
+                />
+              </div>
+              <p className="small" style={{ marginTop: 10 }}>
+                Mẹo: tăng độ sáng màn hình để sinh viên quét nhanh hơn.
+              </p>
             </div>
           </div>
         </div>
