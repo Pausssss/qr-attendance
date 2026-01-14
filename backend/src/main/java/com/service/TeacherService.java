@@ -93,13 +93,7 @@ public class TeacherService {
     }
 
     ClassEntity cls = new ClassEntity();
-    String normName = normalizeName(req.className());
-    if (classRepo.existsByTeacherIdAndNormalizedNameAndIdNot(currentTeacherId(), normName, classId)) {
-      throw new ApiException(HttpStatus.CONFLICT, "Tên lớp đã tồn tại");
-    }
-
     cls.setClassName(req.className());
-    cls.setNormalizedName(normName);
     cls.setNormalizedName(normName);
     cls.setCode(code);
     cls.setTeacherId(currentTeacherId());
@@ -125,7 +119,6 @@ public class TeacherService {
     }
 
     cls.setClassName(req.className());
-    cls.setNormalizedName(normName);
     cls.setNormalizedName(normName);
     return classRepo.save(cls);
   }
