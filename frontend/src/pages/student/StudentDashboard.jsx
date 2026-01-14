@@ -166,7 +166,7 @@ export default function StudentDashboard() {
                   <Link className="btn btn-ghost" to={`/student/classes/${c.id}`}>
                     Xem lớp
                   </Link>
-                  <Link className="btn btn-light" to={`/student/classes/${c.id}/history`}>
+                  <Link className="btn btn-light" to={`/student/classes/${c.id}/attendance`}>
                     Lịch sử
                   </Link>
                 </div>

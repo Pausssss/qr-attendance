@@ -52,6 +52,33 @@ export default function TeacherDashboard() {
       setMessage(err.response?.data?.message || 'Không thể xóa lớp, vui lòng thử lại.');
     }
   };
+  const handleExportClass = async (classId) => {
+    try {
+      setMessage('');
+      // tải file Excel tổng hợp chuyên cần theo LỚP
+      const res = await api.get(`/api/teacher/classes/${classId}/attendance/export`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance-class-${classId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      setMessage(
+        e?.response?.data?.message || 'Không thể xuất báo cáo lớp. Vui lòng thử lại.'
+      );
+    }
+  };
+
 
   const filtered = classes.filter((c) => {
     const kw = q.trim().toLowerCase();
@@ -165,9 +192,14 @@ export default function TeacherDashboard() {
                   <Link className="btn btn-ghost" to={`/teacher/classes/${c.id}`}>
                     Quản lí lớp
                   </Link>
-                  <Link className="btn btn-light" to={`/teacher/classes/${c.id}/report`}>
+                  <button
+                    className="btn btn-light"
+                    type="button"
+                    onClick={() => handleExportClass(c.id)}
+                    title="Xuất báo cáo chuyên cần (Excel) theo lớp"
+                  >
                     Báo cáo
-                  </Link>
+                  </button>
                   <button
                     className="btn btn-danger"
                     type="button"

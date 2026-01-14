@@ -127,6 +127,20 @@ public class TeacherController {
 
     return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
   }
+  /** Export báo cáo chuyên cần TỔNG HỢP theo LỚP ra Excel (.xlsx). */
+  @GetMapping(value = "/classes/{classId}/attendance/export",
+      produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  public ResponseEntity<byte[]> exportClassAttendance(@PathVariable Long classId) {
+    byte[] bytes = teacherService.exportClassAttendanceSummaryXlsx(classId);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.parseMediaType(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+    headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=attendance-class-" + classId + ".xlsx");
+
+    return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+  }
+
 
   // =====================
   // REPORT

@@ -98,6 +98,15 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/student/classes/:id/history"
+        element={
+          <ProtectedRoute role="STUDENT">
+            <StudentAttendanceHistory />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/student/scan"
         element={

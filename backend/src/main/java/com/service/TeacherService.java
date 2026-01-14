@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -500,6 +501,142 @@ public class TeacherService {
       throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Export failed: " + e.getMessage());
     }
   }
+  /**
+   * Export báo cáo chuyên cần TỔNG HỢP theo LỚP ra Excel (.xlsx).
+   * - Hàng: sinh viên
+   * - Cột: từng buổi học (session) + tổng có mặt/vắng + tỷ lệ %
+   */
+  public byte[] exportClassAttendanceSummaryXlsx(Long classId) {
+    ClassEntity cls = classRepo.findById(classId).orElse(null);
+    if (cls == null) throw new ApiException(HttpStatus.NOT_FOUND, "Class not found");
+    if (!Objects.equals(cls.getTeacherId(), currentTeacherId())) {
+      throw new ApiException(HttpStatus.FORBIDDEN, "Forbidden");
+    }
+
+    // 1) Danh sách buổi học của lớp (cũ -> mới)
+    List<SessionEntity> sessions = sessionRepo.findByClassIdOrderBySessionDateAsc(classId);
+
+    // 2) Danh sách sinh viên trong lớp
+    List<Object[]> studentsRows = classMemberRepo.findStudentsByClass(classId); // [id, fullName, email]
+
+    // 3) Map điểm danh: sessionId -> (studentId -> status)
+    Map<Long, Map<Long, AttendanceStatus>> map = new HashMap<>();
+    for (SessionEntity s : sessions) {
+      Map<Long, AttendanceStatus> per = new HashMap<>();
+      for (Attendance a : attendanceRepo.findBySessionId(s.getId())) {
+        per.put(a.getStudentId(), a.getStatus());
+      }
+      map.put(s.getId(), per);
+    }
+
+    DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM");
+    try (Workbook wb = new XSSFWorkbook()) {
+      Sheet sh = wb.createSheet("Summary");
+
+      // header style
+      Font headerFont = wb.createFont();
+      headerFont.setBold(true);
+      CellStyle headerStyle = wb.createCellStyle();
+      headerStyle.setFont(headerFont);
+      headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+      headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+      headerStyle.setBorderBottom(BorderStyle.THIN);
+      headerStyle.setBorderTop(BorderStyle.THIN);
+      headerStyle.setBorderLeft(BorderStyle.THIN);
+      headerStyle.setBorderRight(BorderStyle.THIN);
+
+      int r = 0;
+
+      // Meta
+      Row meta1 = sh.createRow(r++);
+      meta1.createCell(0).setCellValue("Lớp:");
+      meta1.createCell(1).setCellValue(cls.getClassName() + " (" + cls.getCode() + ")");
+      Row meta2 = sh.createRow(r++);
+      meta2.createCell(0).setCellValue("Số buổi:");
+      meta2.createCell(1).setCellValue(sessions.size());
+      Row meta3 = sh.createRow(r++);
+      meta3.createCell(0).setCellValue("Xuất lúc:");
+      meta3.createCell(1).setCellValue(LocalDateTime.now().toString());
+
+      r++; // blank
+
+      // Header row
+      Row header = sh.createRow(r++);
+      int c = 0;
+      Cell h0 = header.createCell(c++); h0.setCellValue("Student ID"); h0.setCellStyle(headerStyle);
+      Cell h1 = header.createCell(c++); h1.setCellValue("Họ tên"); h1.setCellStyle(headerStyle);
+
+      // session columns
+      int idx = 1;
+      for (SessionEntity s : sessions) {
+        String label = "Buổi " + (idx++) + " (" + s.getSessionDate().format(df) + ") - " + s.getTitle();
+        Cell hc = header.createCell(c++);
+        hc.setCellValue(label);
+        hc.setCellStyle(headerStyle);
+      }
+
+      Cell hPresent = header.createCell(c++); hPresent.setCellValue("Có mặt"); hPresent.setCellStyle(headerStyle);
+      Cell hAbsent = header.createCell(c++); hAbsent.setCellValue("Vắng"); hAbsent.setCellStyle(headerStyle);
+      Cell hRate = header.createCell(c++); hRate.setCellValue("Tỷ lệ %"); hRate.setCellStyle(headerStyle);
+
+      // Data rows
+      for (Object[] row : studentsRows) {
+        Long studentId = (Long) row[0];
+        String fullName = (String) row[1];
+
+        Row rr = sh.createRow(r++);
+        int cc = 0;
+        rr.createCell(cc++).setCellValue(studentId);
+        rr.createCell(cc++).setCellValue(fullName);
+
+        int present = 0;
+        int absent = 0;
+
+        for (SessionEntity s : sessions) {
+          AttendanceStatus st = null;
+          Map<Long, AttendanceStatus> per = map.get(s.getId());
+          if (per != null) st = per.get(studentId);
+
+          // Mặc định không có record => ABSENT
+          String cellVal;
+          if (st == null || st == AttendanceStatus.ABSENT) {
+            cellVal = "A";
+            absent++;
+          } else if (st == AttendanceStatus.LATE) {
+            cellVal = "L";
+            present++;
+          } else { // ON_TIME
+            cellVal = "P";
+            present++;
+          }
+          rr.createCell(cc++).setCellValue(cellVal);
+        }
+
+        rr.createCell(cc++).setCellValue(present);
+        rr.createCell(cc++).setCellValue(absent);
+
+        double rate = sessions.isEmpty() ? 0.0 : (present * 100.0 / sessions.size());
+        rr.createCell(cc++).setCellValue(Math.round(rate * 100.0) / 100.0);
+      }
+
+      // autosize
+      int totalCols = 2 + sessions.size() + 3;
+      for (int i = 0; i < totalCols; i++) sh.autoSizeColumn(i);
+
+      // legend
+      r++;
+      Row legend = sh.createRow(r++);
+      legend.createCell(0).setCellValue("Chú thích:");
+      legend.createCell(1).setCellValue("P = Có mặt, L = Đi trễ, A = Vắng");
+
+      java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+      wb.write(out);
+      return out.toByteArray();
+    } catch (Exception e) {
+      throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Export failed");
+    }
+  }
+
 
 /**
    * Báo cáo tổng hợp cho 1 lớp.

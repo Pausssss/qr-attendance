@@ -42,7 +42,9 @@ export default function StudentClassDetail() {
     <div>
       <h2>Lớp học</h2>
 
-      {/* CARD LỚP HỌC – luôn có nút xem lịch sử */}
+      
+            <Link className="btn btn-light" to={`/student/classes/${id}/attendance`}>Lịch sử điểm danh</Link>
+{/* CARD LỚP HỌC – luôn có nút xem lịch sử */}
       <div className="card">
         <p>
           <strong>{classInfo ? classInfo.className : `Lớp #${id}`}</strong>{' '}
