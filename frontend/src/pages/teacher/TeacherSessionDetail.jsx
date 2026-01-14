@@ -201,9 +201,9 @@ export default function TeacherSessionDetail() {
       </div>
       {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
-        <div className="qa-popup-backdrop" onClick={() => setShowQrModal(false)}>
-          <div className="qa-popup qa-popup-qr" onClick={(e) => e.stopPropagation()}>
-            <div className="qa-popup-header">
+        <div className="modal-backdrop" onClick={() => setShowQrModal(false)}>
+          <div className="modal modal-qr" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
               <h3 style={{ margin: 0 }}>Quét mã QR</h3>
               <button
                 className="btn btn-ghost btn-sm"
@@ -212,7 +212,7 @@ export default function TeacherSessionDetail() {
                 Đóng
               </button>
             </div>
-            <div className="qa-popup-body" style={{ textAlign: "center" }}>
+            <div className="modal-body" style={{ textAlign: "center" }}>
               <div className="qr-zoom">
                 <QRCodeCanvas
                   value={JSON.stringify(qrPayload)}
@@ -315,9 +315,9 @@ export default function TeacherSessionDetail() {
       </div>
       {/* POPUP ẢNH SELFIE */}
       {photoPreview && (
-        <div className="qa-popup-backdrop" onClick={() => setPhotoPreview(null)}>
-          <div className="qa-popup" onClick={(e) => e.stopPropagation()}>
-            <div className="qa-popup-header">
+        <div className="modal-backdrop" onClick={() => setPhotoPreview(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
               <h3 style={{ margin: 0 }}>Ảnh selfie</h3>
               <button
                 className="btn btn-ghost btn-sm"
@@ -326,7 +326,7 @@ export default function TeacherSessionDetail() {
                 Đóng
               </button>
             </div>
-            <div className="qa-popup-body" style={{ textAlign: "center" }}>
+            <div className="modal-body" style={{ textAlign: "center" }}>
               <img
                 src={resolveMediaUrl(photoPreview)}
                 alt="Selfie preview"
