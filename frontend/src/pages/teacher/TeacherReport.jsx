@@ -5,16 +5,37 @@ import api from '../../api/axiosClient';
 export default function TeacherReport() {
   const { id } = useParams(); // classId
   const [report, setReport] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const load = async () => {
-      const res = await api.get(`/api/teacher/classes/${id}/report`);
-      setReport(res.data);
+      try {
+        setError('');
+        const res = await api.get(`/api/teacher/classes/${id}/report`);
+        setReport(res.data);
+      } catch (e) {
+        console.error(e);
+        setError(e.response?.data?.message || 'Không tải được báo cáo.');
+      }
     };
     load();
   }, [id]);
 
-  if (!report) return <p>Đang tải...</p>;
+  if (!report && !error) return <p>Đang tải...</p>;
+  if (error) {
+    return (
+      <div className="panel">
+        <div className="panel-head">
+          <h3>Báo cáo lớp</h3>
+        </div>
+        <div className="alert alert-danger">{error}</div>
+        <div className="hint">
+          Gợi ý: Nếu bạn vừa cập nhật chức năng chống trùng (normalized_title), hãy chạy migration DB để thêm cột
+          <code> normalized_title </code> cho bảng sessions.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

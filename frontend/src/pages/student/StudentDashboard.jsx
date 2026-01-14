@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axiosClient';
 
@@ -6,6 +6,8 @@ export default function StudentDashboard() {
   const [classes, setClasses] = useState([]);
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+  const [q, setQ] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const loadClasses = async () => {
     const res = await api.get('/api/student/classes');
@@ -20,6 +22,7 @@ export default function StudentDashboard() {
     e.preventDefault();
     setMessage('');
     try {
+      setLoading(true);
       // Normalize để tránh lỗi do copy/paste có khoảng trắng hoặc nhập chữ thường.
       const normalized = (code || '').trim().toUpperCase().replace(/\s+/g, '');
       if (!normalized) {
@@ -33,35 +36,69 @@ export default function StudentDashboard() {
       await loadClasses();
     } catch (err) {
       setMessage(err.response?.data?.message || 'Không tham gia được lớp');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const filtered = useMemo(() => {
+    const kw = q.trim().toLowerCase();
+    if (!kw) return classes;
+    return classes.filter((c) => {
+      return (
+        String(c.className || '').toLowerCase().includes(kw) ||
+        String(c.code || '').toLowerCase().includes(kw)
+      );
+    });
+  }, [classes, q]);
+
   return (
-    <div>
-      <div className="hero">
-        <div className="hero-card">
-          <h1 className="hero-title">Lớp học của tôi</h1>
-          <p className="hero-sub">
-            Tham gia lớp bằng mã, xem các buổi học và lịch sử điểm danh.
-          </p>
+    <div className="dash">
+      <div className="dash-hero">
+        <div className="dash-hero-left">
+          <h1 className="dash-title">Lớp học của tôi</h1>
+          <p className="dash-sub">Tham gia lớp bằng mã, xem buổi học và lịch sử điểm danh.</p>
+
+          <div className="dash-kpis">
+            <div className="kpi">
+              <div className="kpi-value">{classes.length}</div>
+              <div className="kpi-label">Lớp đã tham gia</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="dash-hero-right">
+          <div className="dash-search">
+            <input
+              className="input"
+              placeholder="Tìm theo tên lớp hoặc mã lớp…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      <div className="card-grid">
-        <div className="card col-6">
-          <div className="card-title">
+      <div className="dash-grid">
+        <div className="panel">
+          <div className="panel-head">
             <h3>Tham gia lớp bằng mã</h3>
+            <span className="pill">Nhanh</span>
           </div>
 
-          <form onSubmit={joinClass} className="row">
-            <input
-              className="input"
-              placeholder="Nhập mã lớp"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <button className="btn btn-primary" type="submit">
-              Tham gia
+          <form onSubmit={joinClass} className="stack">
+            <div className="field">
+              <label className="label">Mã lớp</label>
+              <input
+                className="input"
+                placeholder="Nhập mã lớp"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+            </div>
+
+            <button className="btn btn-primary" type="submit" disabled={loading}>
+              {loading ? 'Đang tham gia...' : 'Tham gia'}
             </button>
           </form>
 
@@ -76,20 +113,51 @@ export default function StudentDashboard() {
               {message}
             </div>
           )}
+
+          <div className="hint">Mẹo: Mã lớp do giảng viên cung cấp (VD: L34ERN).</div>
         </div>
 
-        <div className="card col-6">
-          <div className="card-title">
+        <div className="panel">
+          <div className="panel-head">
             <h3>Danh sách lớp</h3>
+            <span className="text-muted">
+              {filtered.length}/{classes.length}
+            </span>
           </div>
 
-          {classes.length === 0 && <p>Chưa có lớp nào.</p>}
-
-          {classes.map((c) => (
-            <div key={c.id} style={{ marginBottom: '0.5rem' }}>
-              <Link to={`/student/classes/${c.id}`}>{c.className}</Link>
+          {classes.length === 0 && (
+            <div className="empty">
+              <div className="empty-title">Chưa tham gia lớp nào</div>
+              <div className="empty-sub">Nhập mã lớp ở cột bên trái để tham gia.</div>
             </div>
-          ))}
+          )}
+
+          {classes.length > 0 && filtered.length === 0 && (
+            <div className="empty">
+              <div className="empty-title">Không tìm thấy lớp phù hợp</div>
+              <div className="empty-sub">Thử tìm theo mã lớp hoặc rút gọn từ khóa.</div>
+            </div>
+          )}
+
+          <div className="class-list">
+            {filtered.map((c) => (
+              <div key={c.id} className="class-item">
+                <div className="class-meta">
+                  <div className="class-name">{c.className}</div>
+                  <div className="class-code">Mã lớp: {c.code}</div>
+                </div>
+
+                <div className="class-actions">
+                  <Link className="btn btn-ghost" to={`/student/classes/${c.id}`}>
+                    Xem lớp
+                  </Link>
+                  <Link className="btn btn-light" to={`/student/classes/${c.id}/history`}>
+                    Lịch sử
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
