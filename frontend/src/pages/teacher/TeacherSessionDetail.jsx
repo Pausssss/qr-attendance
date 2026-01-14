@@ -68,6 +68,29 @@ export default function TeacherSessionDetail() {
     }
   };
 
+
+  const exportAttendanceXlsx = async () => {
+    try {
+      const res = await api.get(`/teacher/sessions/${sessionId}/attendance/export`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `attendance-session-${sessionId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert('Không thể xuất file điểm danh.');
+    }
+  };
+
   useEffect(() => {
     if (!sessionId) return;
     loadSession();
@@ -201,9 +224,9 @@ export default function TeacherSessionDetail() {
       </div>
       {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
-        <div className="modal-backdrop" onClick={() => setShowQrModal(false)}>
+        <div className="qa-popup-backdrop" onClick={() => setShowQrModal(false)}>
           <div className="modal modal-qr" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+            <div className="qa-popup-header">
               <h3 style={{ margin: 0 }}>Quét mã QR</h3>
               <button
                 className="btn btn-ghost btn-sm"
@@ -212,7 +235,7 @@ export default function TeacherSessionDetail() {
                 Đóng
               </button>
             </div>
-            <div className="modal-body" style={{ textAlign: "center" }}>
+            <div className="qa-popup-body" style={{ textAlign: "center" }}>
               <div className="qr-zoom">
                 <QRCodeCanvas
                   value={JSON.stringify(qrPayload)}
@@ -315,9 +338,9 @@ export default function TeacherSessionDetail() {
       </div>
       {/* POPUP ẢNH SELFIE */}
       {photoPreview && (
-        <div className="modal-backdrop" onClick={() => setPhotoPreview(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="qa-popup-backdrop" onClick={() => setPhotoPreview(null)}>
+          <div className="qa-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="qa-popup-header">
               <h3 style={{ margin: 0 }}>Ảnh selfie</h3>
               <button
                 className="btn btn-ghost btn-sm"
@@ -326,7 +349,7 @@ export default function TeacherSessionDetail() {
                 Đóng
               </button>
             </div>
-            <div className="modal-body" style={{ textAlign: "center" }}>
+            <div className="qa-popup-body" style={{ textAlign: "center" }}>
               <img
                 src={resolveMediaUrl(photoPreview)}
                 alt="Selfie preview"

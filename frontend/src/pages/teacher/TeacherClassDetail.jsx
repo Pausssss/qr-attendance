@@ -59,11 +59,7 @@ export default function TeacherClassDetail() {
             <strong>{classInfo.className}</strong> – Mã lớp: <code>{classInfo.code}</code>
           </p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Link to={`/teacher/classes/${id}/report`}>Xem báo cáo</Link>
-            <button className="btn btnDanger btnSm" onClick={deleteClass}>
-              Xóa lớp
-            </button>
-          </div>
+</div>
         </div>
       )}
 

@@ -12,6 +12,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
   Optional<Attendance> findBySessionIdAndStudentId(Long sessionId, Long studentId);
 
+  List<Attendance> findBySessionId(Long sessionId);
+
   // =========================
   // Lấy danh sách điểm danh + thông tin sinh viên trong 1 buổi học
   // =========================

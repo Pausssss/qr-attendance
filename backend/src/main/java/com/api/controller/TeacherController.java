@@ -6,6 +6,9 @@ import com.domain.entity.SessionEntity;
 import com.service.TeacherService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -108,6 +111,21 @@ public class TeacherController {
   @GetMapping("/sessions/{sessionId}/attendance")
   public List<Map<String, Object>> attendance(@PathVariable Long sessionId) {
     return teacherService.getSessionAttendance(sessionId);
+  }
+
+
+  /** Export điểm danh của buổi học ra Excel (.xlsx) - tổng hợp tất cả sinh viên trong lớp. */
+  @GetMapping(value = "/sessions/{sessionId}/attendance/export",
+      produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+  public ResponseEntity<byte[]> exportAttendance(@PathVariable Long sessionId) {
+    byte[] bytes = teacherService.exportSessionAttendanceXlsx(sessionId);
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.parseMediaType(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+    headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=attendance-session-" + sessionId + ".xlsx");
+
+    return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
   }
 
   // =====================

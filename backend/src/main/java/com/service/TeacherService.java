@@ -14,6 +14,8 @@ import com.repo.ClassMemberRepository;
 import com.repo.ClassRepository;
 import com.repo.SessionRepository;
 import com.util.CodeUtil;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.util.SecurityUtil;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -62,6 +64,13 @@ public class TeacherService {
     return cu.getId();
   }
 
+  private static String normalizeName(String s) {
+    if (s == null) return "";
+    // trim + gộp nhiều khoảng trắng + lower-case
+    return s.trim().replaceAll("\\s+", " ").toLowerCase();
+  }
+
+
   public List<ClassEntity> getMyClasses() {
     return classRepo.findByTeacherIdOrderByCreatedAtDesc(currentTeacherId());
   }
@@ -78,8 +87,20 @@ public class TeacherService {
     }
     if (code == null) code = CodeUtil.generateClassCode();
 
+    String normName = normalizeName(req.className());
+    if (classRepo.existsByTeacherIdAndNormalizedName(currentTeacherId(), normName)) {
+      throw new ApiException(HttpStatus.CONFLICT, "Tên lớp đã tồn tại");
+    }
+
     ClassEntity cls = new ClassEntity();
+    String normName = normalizeName(req.className());
+    if (classRepo.existsByTeacherIdAndNormalizedNameAndIdNot(currentTeacherId(), normName, classId)) {
+      throw new ApiException(HttpStatus.CONFLICT, "Tên lớp đã tồn tại");
+    }
+
     cls.setClassName(req.className());
+    cls.setNormalizedName(normName);
+    cls.setNormalizedName(normName);
     cls.setCode(code);
     cls.setTeacherId(currentTeacherId());
     cls.setCreatedAt(LocalDateTime.now());
@@ -98,7 +119,14 @@ public class TeacherService {
       throw new ApiException(HttpStatus.NOT_FOUND, "Class not found");
     }
 
+    String normName = normalizeName(req.className());
+    if (classRepo.existsByTeacherIdAndNormalizedNameAndIdNot(currentTeacherId(), normName, classId)) {
+      throw new ApiException(HttpStatus.CONFLICT, "Tên lớp đã tồn tại");
+    }
+
     cls.setClassName(req.className());
+    cls.setNormalizedName(normName);
+    cls.setNormalizedName(normName);
     return classRepo.save(cls);
   }
 
@@ -233,9 +261,15 @@ public class TeacherService {
       throw new ApiException(HttpStatus.NOT_FOUND, "Class not found");
     }
 
+    String normTitle = normalizeName(req.title());
+    if (sessionRepo.existsByClassIdAndNormalizedTitle(classId, normTitle)) {
+      throw new ApiException(HttpStatus.CONFLICT, "Tên buổi học đã tồn tại");
+    }
+
     SessionEntity s = new SessionEntity();
     s.setClassId(classId);
     s.setTitle(req.title());
+    s.setNormalizedTitle(normTitle);
     s.setSessionDate(req.sessionDate());
     s.setStatus(SessionStatus.CLOSED);
     s.setQrToken(null);
@@ -382,7 +416,99 @@ public class TeacherService {
     return out;
   }
 
+  
   /**
+   * Export điểm danh của 1 buổi học ra file Excel (.xlsx).
+   * - Tổng hợp TẤT CẢ sinh viên trong lớp (kể cả chưa điểm danh).
+   */
+  public byte[] exportSessionAttendanceXlsx(Long sessionId) {
+    SessionEntity session = sessionRepo.findById(sessionId).orElse(null);
+    if (session == null) throw new ApiException(HttpStatus.NOT_FOUND, "Session not found");
+
+    ClassEntity cls = classRepo.findById(session.getClassId()).orElse(null);
+    if (cls == null || !Objects.equals(cls.getTeacherId(), currentTeacherId())) {
+      throw new ApiException(HttpStatus.FORBIDDEN, "Forbidden");
+    }
+
+    // 1) Danh sách tất cả sinh viên trong lớp
+    List<Object[]> studentsRows = classMemberRepo.findStudentsByClass(cls.getId()); // [id, fullName, email]
+
+    // 2) Map điểm danh theo studentId (nếu có)
+    Map<Long, Attendance> attMap = new HashMap<>();
+    for (Attendance a : attendanceRepo.findBySessionId(sessionId)) {
+      attMap.put(a.getStudentId(), a);
+    }
+
+    try (Workbook wb = new XSSFWorkbook()) {
+      Sheet sh = wb.createSheet("Attendance");
+
+      // style header
+      Font headerFont = wb.createFont();
+      headerFont.setBold(true);
+      CellStyle headerStyle = wb.createCellStyle();
+      headerStyle.setFont(headerFont);
+      headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+      headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+      headerStyle.setBorderBottom(BorderStyle.THIN);
+      headerStyle.setBorderTop(BorderStyle.THIN);
+      headerStyle.setBorderLeft(BorderStyle.THIN);
+      headerStyle.setBorderRight(BorderStyle.THIN);
+
+      // 0) Meta rows
+      int r = 0;
+      Row meta1 = sh.createRow(r++);
+      meta1.createCell(0).setCellValue("Lớp:");
+      meta1.createCell(1).setCellValue(cls.getClassName());
+      Row meta2 = sh.createRow(r++);
+      meta2.createCell(0).setCellValue("Buổi học:");
+      meta2.createCell(1).setCellValue(session.getTitle());
+      Row meta3 = sh.createRow(r++);
+      meta3.createCell(0).setCellValue("Thời gian:");
+      meta3.createCell(1).setCellValue(String.valueOf(session.getSessionDate()));
+
+      r++; // blank row
+
+      // 1) Header row
+      Row header = sh.createRow(r++);
+      String[] cols = {"STT", "StudentId", "Họ tên", "Email", "Trạng thái", "Thời điểm check-in"};
+      for (int i = 0; i < cols.length; i++) {
+        Cell c = header.createCell(i);
+        c.setCellValue(cols[i]);
+        c.setCellStyle(headerStyle);
+      }
+
+      // 2) Data rows
+      int stt = 1;
+      for (Object[] srow : studentsRows) {
+        Long studentId = ((Number) srow[0]).longValue();
+        String fullName = String.valueOf(srow[1]);
+        String email = String.valueOf(srow[2]);
+
+        Attendance a = attMap.get(studentId);
+
+        Row row = sh.createRow(r++);
+        row.createCell(0).setCellValue(stt++);
+        row.createCell(1).setCellValue(studentId);
+        row.createCell(2).setCellValue(fullName);
+        row.createCell(3).setCellValue(email);
+        row.createCell(4).setCellValue(a != null ? String.valueOf(a.getStatus()) : "ABSENT");
+        row.createCell(5).setCellValue(a != null && a.getCheckInTime() != null ? String.valueOf(a.getCheckInTime()) : "");
+      }
+
+      for (int i = 0; i < cols.length; i++) {
+        sh.autoSizeColumn(i);
+      }
+
+      try (java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream()) {
+        wb.write(bos);
+        return bos.toByteArray();
+      }
+    } catch (Exception e) {
+      throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Export failed: " + e.getMessage());
+    }
+  }
+
+/**
    * Báo cáo tổng hợp cho 1 lớp.
    * - tổng số buổi học
    * - thống kê theo từng sinh viên: onTime/late/present/absent

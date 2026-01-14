@@ -23,4 +23,7 @@ public interface SessionRepository extends JpaRepository<SessionEntity, Long> {
   // Delete sessions by class
   void deleteByClassId(Long classId);
 
+  boolean existsByClassIdAndNormalizedTitle(Long classId, String normalizedTitle);
+  boolean existsByClassIdAndNormalizedTitleAndIdNot(Long classId, String normalizedTitle, Long id);
 }
+

@@ -13,7 +13,9 @@ import java.time.LocalDateTime;
  * - teacherLat/teacherLng: vị trí giảng viên tại thời điểm mở QR (nếu có kiểm tra khoảng cách)
  */
 @Entity
-@Table(name = "Sessions")
+@Table(name = "Sessions", uniqueConstraints = {
+    @UniqueConstraint(name = "uq_class_sessiontitle_norm", columnNames = {"classId", "normalizedTitle"})
+})
 public class SessionEntity {
 
   @Id
@@ -25,6 +27,12 @@ public class SessionEntity {
 
   @Column(nullable = false)
   private String title;
+
+  /**
+   * Tiêu đề buổi học đã chuẩn hoá để check trùng trong cùng lớp.
+   */
+  @Column(nullable = false)
+  private String normalizedTitle;
 
   @Column(nullable = false)
   private LocalDateTime sessionDate;
@@ -56,8 +64,7 @@ public class SessionEntity {
                        LocalDateTime createdAt) {
     this.id = id;
     this.classId = classId;
-    this.title = title;
-    this.sessionDate = sessionDate;
+    this.title = title;    this.sessionDate = sessionDate;
     this.status = status;
     this.qrToken = qrToken;
     this.qrTokenExpiresAt = qrTokenExpiresAt;
@@ -87,7 +94,14 @@ public class SessionEntity {
   }
 
   public void setTitle(String title) {
-    this.title = title;
+    this.title = title;  }
+
+  public String getNormalizedTitle() {
+    return normalizedTitle;
+  }
+
+  public void setNormalizedTitle(String normalizedTitle) {
+    this.normalizedTitle = normalizedTitle;
   }
 
   public LocalDateTime getSessionDate() {

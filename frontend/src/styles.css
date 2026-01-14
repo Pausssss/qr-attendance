@@ -255,6 +255,34 @@ main{ flex:1; }
     radial-gradient(16px 16px at 30% 30%, rgba(255,255,255,.55), transparent 60%),
     linear-gradient(135deg, rgba(124,92,255,.55), rgba(91,157,255,.55));
   box-shadow: var(--shadow-sm);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+}
+
+
+/* NAVBAR MOBILE */
+@media (max-width: 760px){
+  .navbar .wrap{
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .nav-links{
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+  .nav-user{
+    margin-left: auto;
+  }
+  .nav-links > a{
+    padding: 8px 10px;
+  }
+  .btn.btn-ghost.btn-sm{
+    padding: 8px 10px;
+    height: 38px;
+  }
 }
 
 /* ---------- Hero ---------- */
@@ -1043,3 +1071,48 @@ table{ width:100%; border-collapse: separate; border-spacing: 0; }
 table th, table td{ padding: 10px 10px; border-bottom: 1px solid var(--border); }
 table th{ text-align:left; color: var(--muted); font-weight: 800; }
 table tr:hover td{ background: rgba(255,255,255,.04); }
+
+
+/* ===== Popup preview (QR / ảnh) - tránh xung đột Bootstrap .modal ===== */
+.qa-popup-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 16px;
+}
+
+.qa-popup{
+  width: min(720px, 95vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 24px 80px rgba(0,0,0,.35);
+  z-index: 10000;
+}
+
+.qa-popup-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,.08);
+}
+
+.qa-popup-body{
+  padding: 16px;
+}
+
+.qa-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.qa-row-between{
+  justify-content: space-between;
+}

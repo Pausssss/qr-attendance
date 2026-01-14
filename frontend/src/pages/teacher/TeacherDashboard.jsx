@@ -37,6 +37,22 @@ export default function TeacherDashboard() {
     }
   };
 
+
+  const handleDeleteClass = async (classId) => {
+    const ok = window.confirm('Xóa lớp này? (Sẽ xóa cả sinh viên, buổi học và dữ liệu điểm danh)');
+    if (!ok) return;
+
+    try {
+      setMessage('');
+      await api.delete(`/api/teacher/classes/${classId}`);
+      await loadClasses();
+      setMessage('Đã xóa lớp.');
+    } catch (err) {
+      console.error(err);
+      setMessage(err.response?.data?.message || 'Không thể xóa lớp, vui lòng thử lại.');
+    }
+  };
+
   const filtered = classes.filter((c) => {
     const kw = q.trim().toLowerCase();
     if (!kw) return true;
@@ -59,14 +75,6 @@ export default function TeacherDashboard() {
             <div className="kpi">
               <div className="kpi-value">{classes.length}</div>
               <div className="kpi-label">Lớp học</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi-value">QR</div>
-              <div className="kpi-label">Điểm danh nhanh</div>
-            </div>
-            <div className="kpi">
-              <div className="kpi-value">Báo cáo</div>
-              <div className="kpi-label">Theo dõi chuyên cần</div>
             </div>
           </div>
         </div>
@@ -155,11 +163,19 @@ export default function TeacherDashboard() {
 
                 <div className="class-actions">
                   <Link className="btn btn-ghost" to={`/teacher/classes/${c.id}`}>
-                    Vào lớp
+                    Quản lí lớp
                   </Link>
-                  <Link className="btn btn-light" to={`/teacher/classes/${c.id}`}>
-                    Quản lý
+                  <Link className="btn btn-light" to={`/teacher/classes/${c.id}/report`}>
+                    Báo cáo
                   </Link>
+                  <button
+                    className="btn btn-danger"
+                    type="button"
+                    onClick={() => handleDeleteClass(c.id)}
+                    title="Xóa lớp"
+                  >
+                    Xóa
+                  </button>
                 </div>
               </div>
             ))}
