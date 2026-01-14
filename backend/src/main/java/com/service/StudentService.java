@@ -9,6 +9,7 @@ import com.repo.AttendanceRepository;
 import com.repo.ClassMemberRepository;
 import com.repo.ClassRepository;
 import com.repo.SessionRepository;
+import com.repo.UserRepository;
 import com.util.SecurityUtil;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -34,15 +35,18 @@ public class StudentService {
   private final ClassMemberRepository classMemberRepo;
   private final SessionRepository sessionRepo;
   private final AttendanceRepository attendanceRepo;
+  private final UserRepository userRepo;
 
   public StudentService(ClassRepository classRepo,
                         ClassMemberRepository classMemberRepo,
                         SessionRepository sessionRepo,
-                        AttendanceRepository attendanceRepo) {
+                        AttendanceRepository attendanceRepo,
+                        UserRepository userRepo) {
     this.classRepo = classRepo;
     this.classMemberRepo = classMemberRepo;
     this.sessionRepo = sessionRepo;
     this.attendanceRepo = attendanceRepo;
+    this.userRepo = userRepo;
   }
 
   /**
@@ -64,6 +68,9 @@ public class StudentService {
     List<Object[]> rows = classMemberRepo.findJoinedClasses(currentStudentId());
     List<Map<String, Object>> out = new ArrayList<>();
 
+    // Tránh N+1: cache teacherId -> teacherName trong 1 lần gọi.
+    Map<Long, String> teacherNameCache = new LinkedHashMap<>();
+
     for (Object[] r : rows) {
       ClassEntity c = (ClassEntity) r[0];
       LocalDateTime joinedAt = (LocalDateTime) r[1];
@@ -73,6 +80,13 @@ public class StudentService {
       row.put("className", c.getClassName());
       row.put("code", c.getCode());
       row.put("teacherId", c.getTeacherId());
+      String teacherName = null;
+      if (c.getTeacherId() != null) {
+        teacherName = teacherNameCache.computeIfAbsent(c.getTeacherId(), tid ->
+            userRepo.findById(tid).map(u -> u.getFullName()).orElse(null)
+        );
+      }
+      row.put("teacherName", teacherName);
       row.put("createdAt", c.getCreatedAt());
       row.put("joinedAt", joinedAt);
 

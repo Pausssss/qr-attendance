@@ -52,6 +52,13 @@ export default function StudentDashboard() {
     });
   }, [classes, q]);
 
+  const fmtDate = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('vi-VN');
+  };
+
   return (
     <div className="dash">
       <div className="dash-hero">
@@ -144,7 +151,15 @@ export default function StudentDashboard() {
               <div key={c.id} className="class-item">
                 <div className="class-meta">
                   <div className="class-name">{c.className}</div>
-                  <div className="class-code">Mã lớp: {c.code}</div>
+                  <div className="class-code">
+                    Mã lớp: <strong>{c.code}</strong>
+                  </div>
+                  {!!c.teacherName && (
+                    <div className="class-sub">Giảng viên: {c.teacherName}</div>
+                  )}
+                  {!!c.createdAt && (
+                    <div className="class-sub">Tạo: {fmtDate(c.createdAt)}</div>
+                  )}
                 </div>
 
                 <div className="class-actions">

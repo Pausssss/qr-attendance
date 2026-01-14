@@ -292,7 +292,17 @@ export default function TeacherSessionDetail() {
 
       {/* ATTENDANCE LIST */}
       <div className="card">
-        <h3>DANH SÁCH ĐIỂM DANH</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <h3 style={{ margin: 0 }}>DANH SÁCH ĐIỂM DANH</h3>
+        <button
+          className="btn btnPrimary btnSm"
+          onClick={exportAttendanceXlsx}
+          disabled={members.length === 0}
+          title={members.length === 0 ? 'Chưa có sinh viên trong lớp' : 'Xuất Excel tổng hợp tất cả sinh viên của lớp'}
+        >
+          Xuất Excel
+        </button>
+      </div>
         {attendance.length === 0 && <p>Chưa có sinh viên điểm danh.</p>}
         {attendance.length > 0 && (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
