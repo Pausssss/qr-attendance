@@ -52,6 +52,19 @@ export default function TeacherDashboard() {
       setMessage(err.response?.data?.message || 'Không thể xóa lớp, vui lòng thử lại.');
     }
   };
+
+  const handleRenameClass = async (classId, currentName) => {
+    const nextName = window.prompt('Nhập tên lớp mới:', currentName || '');
+    if (!nextName) return;
+    try {
+      await api.put(`/api/teacher/classes/${classId}`, { className: nextName });
+      setMessage('Đã cập nhật tên lớp');
+      await loadClasses();
+    } catch (err) {
+      console.error(err);
+      setMessage(err?.response?.data?.message || 'Không thể cập nhật tên lớp');
+    }
+  };
   const handleExportClass = async (classId) => {
     try {
       setMessage('');
@@ -193,12 +206,27 @@ export default function TeacherDashboard() {
                     Quản lí lớp
                   </Link>
                   <button
+                    className="btn btn-ghost"
+                    type="button"
+                    onClick={() => handleRenameClass(c.id, c.className)}
+                    title="Sửa tên lớp"
+                  >
+                    Sửa tên
+                  </button>
+                  <Link
+                    className="btn btn-light"
+                    to={`/teacher/classes/${c.id}/report`}
+                    title="Xem báo cáo (màn hình tổng quan)"
+                  >
+                    Báo cáo
+                  </Link>
+                  <button
                     className="btn btn-light"
                     type="button"
                     onClick={() => handleExportClass(c.id)}
                     title="Xuất báo cáo chuyên cần (Excel) theo lớp"
                   >
-                    Báo cáo
+                    Xuất Excel
                   </button>
                   <button
                     className="btn btn-danger"

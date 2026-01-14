@@ -41,9 +41,6 @@ export default function StudentClassDetail() {
   return (
     <div>
       <h2>Lớp học</h2>
-
-      
-            <Link className="btn btn-light" to={`/student/classes/${id}/attendance`}>Lịch sử điểm danh</Link>
       <div className="card">
         <p>
           <strong>{classInfo ? classInfo.className : `Lớp #${id}`}</strong>{' '}
@@ -53,9 +50,6 @@ export default function StudentClassDetail() {
             </>
           )}
         </p>
-        <Link to={`/student/classes/${id}/attendance`}>
-          Xem lịch sử điểm danh
-        </Link>
       </div>
 
       {/* DANH SÁCH BUỔI HỌC */}
