@@ -5,6 +5,66 @@ import { QRCodeCanvas } from 'qrcode.react';
 
 const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
+// Độ chính xác mục tiêu (m). Trên laptop/desktop thường chỉ ra được vị trí theo Wi‑Fi/IP nên accuracy có thể 100–1000m.
+// Thay vì chặn cứng, ta sẽ lấy nhiều mẫu trong vài giây và chọn mẫu tốt nhất.
+const DESIRED_ACCURACY_M = 120;
+const MAX_WAIT_GPS_MS = 20000;
+
+function getBestPosition({ desiredAccuracy = DESIRED_ACCURACY_M, maxWaitMs = MAX_WAIT_GPS_MS } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported'));
+      return;
+    }
+
+    let best = null;
+    let last = null;
+    let resolved = false;
+
+    const finish = (pos) => {
+      if (resolved) return;
+      resolved = true;
+      try {
+        navigator.geolocation.clearWatch(watchId);
+      } catch (_) {}
+      clearTimeout(timer);
+      if (!pos) reject(new Error('No position'));
+      else resolve(pos);
+    };
+
+    const onPos = (pos) => {
+      last = pos;
+      const acc = pos?.coords?.accuracy;
+      const bestAcc = best?.coords?.accuracy;
+      if (!best || (acc != null && bestAcc != null && acc < bestAcc) || (acc != null && bestAcc == null)) {
+        best = pos;
+      }
+      if (acc != null && acc <= desiredAccuracy) {
+        finish(best);
+      }
+    };
+
+    const onErr = (err) => {
+      // Một số trình duyệt sẽ trả lỗi timeout/position_unavailable nếu đang indoor.
+      // Nếu đã có best/last thì vẫn trả về để người dùng có thể xác nhận mở phiên.
+      if (best || last) finish(best || last);
+      else reject(err);
+    };
+
+    const watchId = navigator.geolocation.watchPosition(onPos, onErr, {
+      ...GEO_OPTIONS,
+      // watchPosition: timeout là timeout của mỗi lần update
+      timeout: 15000,
+      maximumAge: 0,
+      enableHighAccuracy: true,
+    });
+
+    const timer = setTimeout(() => {
+      finish(best || last);
+    }, maxWaitMs);
+  });
+}
+
 function resolveMediaUrl(url) {
   if (!url) return url;
   if (typeof url === 'string' && url.startsWith('/uploads/')) {
@@ -112,36 +172,42 @@ export default function TeacherSessionDetail() {
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const accuracy = pos.coords.accuracy;
-          if (accuracy && accuracy > 120) {
-            alert(
-              `Vị trí giảng viên chưa chính xác (±${Math.round(
-                accuracy
-              )}m). Hãy bật "Độ chính xác cao" hoặc mở điểm danh bằng điện thoại để GPS chuẩn hơn.`
-            );
-            return;
-          }
+    try {
+      // Lấy nhiều mẫu trong ~20s và chọn mẫu tốt nhất
+      const pos = await getBestPosition({
+        desiredAccuracy: DESIRED_ACCURACY_M,
+        maxWaitMs: MAX_WAIT_GPS_MS,
+      });
 
-          const body = {
-            teacherLat: pos.coords.latitude,
-            teacherLng: pos.coords.longitude,
-          };
-          const res = await api.put(`/api/teacher/sessions/${sessionId}/open`, body);
-          setSession(res.data);
-          setQrPayload(res.data.qrPayload);
-        } catch (err) {
-          console.error(err);
-          alert(err.response?.data?.message || 'Không mở được phiên điểm danh, hãy thử lại.');
-        }
-      },
-      () => {
-        alert('Không lấy được vị trí GPS. Hãy bật GPS và cho phép quyền truy cập.');
-      },
-      GEO_OPTIONS
-    );
+      const accuracy = pos?.coords?.accuracy;
+      if (accuracy != null && accuracy > DESIRED_ACCURACY_M) {
+        const ok = window.confirm(
+          `Vị trí hiện tại độ chính xác khoảng ±${Math.round(
+            accuracy
+          )}m nên có thể lệch.\n\nGợi ý: bật "Độ chính xác cao", bật Wi‑Fi, ra gần cửa sổ/ngoài trời và thử lại.\n\nBạn vẫn muốn mở phiên điểm danh với vị trí này không?`
+        );
+        if (!ok) return;
+      }
+
+      const body = {
+        teacherLat: pos.coords.latitude,
+        teacherLng: pos.coords.longitude,
+      };
+
+      const res = await api.put(`/api/teacher/sessions/${sessionId}/open`, body);
+      setSession(res.data);
+      setQrPayload(res.data.qrPayload);
+    } catch (err) {
+      console.error(err);
+      // 1: permission denied, 2: position unavailable, 3: timeout (theo chuẩn Geolocation)
+      if (err?.code === 1) {
+        alert('Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Location cho website và thử lại.');
+      } else {
+        alert(
+          'Không lấy được vị trí GPS. Hãy bật định vị/Location Services và cho phép quyền truy cập. Nếu đang dùng laptop, độ chính xác thường kém — mở bằng điện thoại sẽ chuẩn hơn.'
+        );
+      }
+    }
   };
 
   const closeSession = async () => {
