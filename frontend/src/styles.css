@@ -729,3 +729,223 @@ table tr:hover td{ background: rgba(255,255,255,.04); }
 .qa-row-between{
   justify-content: space-between;
 }
+
+/* =========================================================
+   MONOCHROME MODERN THEME (2026)
+   - 1 tông màu (đen/trắng + xám), hiện đại, không gradient/loang màu
+   - Không đụng logic code: chỉ override CSS
+   ========================================================= */
+
+/* ----- Monochrome tokens (Dark default) ----- */
+:root{
+  /* Neutral background */
+  --bg:#0B1220;
+  --bg2:#0B1220;
+  --bg3:#0B1220;
+
+  /* Text */
+  --text: rgba(248,250,252,.92);
+  --muted: rgba(226,232,240,.70);
+  --muted-2: rgba(226,232,240,.52);
+
+  /* Surfaces */
+  --surface: #0F172A;
+  --surface-2: #111C2F;
+  --surface-3: #13213A;
+
+  /* Borders & focus */
+  --border: rgba(148,163,184,.18);
+  --border-2: rgba(148,163,184,.28);
+  --ring: rgba(226,232,240,.18);
+
+  /* "Primary" = monochrome ink */
+  --primary:#E2E8F0;
+  --primary-2:#F8FAFC; /* kept for compatibility */
+  --primary-contrast:#0B1220;
+
+  /* Keep semantic tokens monochrome as well */
+  --accent: var(--primary);
+  --warning: var(--primary);
+  --danger: var(--primary);
+
+  /* Shadows (neutral) */
+  --shadow-sm: 0 8px 18px rgba(0,0,0,.30);
+  --shadow-md: 0 14px 34px rgba(0,0,0,.38);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.48);
+}
+
+/* Light mode */
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#F8FAFC;
+    --bg2:#F8FAFC;
+    --bg3:#F8FAFC;
+
+    --text: rgba(15,23,42,.92);
+    --muted: rgba(15,23,42,.68);
+    --muted-2: rgba(15,23,42,.52);
+
+    --surface:#FFFFFF;
+    --surface-2:#FFFFFF;
+    --surface-3:#F1F5F9;
+
+    --border: rgba(15,23,42,.12);
+    --border-2: rgba(15,23,42,.18);
+    --ring: rgba(15,23,42,.14);
+
+    --primary:#0F172A;
+    --primary-2:#111827;
+    --primary-contrast:#FFFFFF;
+
+    --shadow-sm: 0 10px 18px rgba(15,23,42,.08);
+    --shadow-md: 0 16px 40px rgba(15,23,42,.10);
+    --shadow-lg: 0 24px 70px rgba(15,23,42,.14);
+  }
+}
+
+/* ----- Remove gradients / glass blur globally ----- */
+body{
+  background: var(--bg) !important;
+  background-attachment: initial !important;
+}
+
+.navbar,
+.dash-hero,
+.panel,
+.hero-card,
+.card,
+.modal,
+.scan-card,
+.toast{
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ----- App surfaces: solid, clean, no gradient borders ----- */
+.navbar{
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.dash-hero,
+.panel,
+.hero-card,
+.card,
+.modal,
+.scan-card,
+.toast{
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.hero-card::after{ display:none !important; }
+
+.brand .dot{
+  background: var(--primary) !important;
+  box-shadow: none !important;
+}
+
+.avatar{
+  background: var(--surface-3) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* ----- Inputs: neutral focus (no purple) ----- */
+input:focus,
+select:focus,
+textarea:focus,
+.input:focus{
+  border-color: var(--border-2) !important;
+  box-shadow: 0 0 0 6px var(--ring) !important;
+}
+
+/* ----- Buttons: monochrome ----- */
+.btn-primary,
+.btnPrimary{
+  background: var(--primary) !important;
+  color: var(--primary-contrast) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid transparent !important;
+}
+.btn-primary:hover,
+.btnPrimary:hover{
+  transform: translateY(-1px);
+  filter: none !important;
+  background: var(--primary-2) !important;
+}
+
+.btn-danger,
+.btnDanger{
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border-color: var(--border-2) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.btn-light{
+  background: var(--surface-3) !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* ----- Chips & Alerts: keep monochrome (no green/yellow/red) ----- */
+.chip-success,
+.chip-warning,
+.chip-danger,
+.chip-primary,
+.alert-success,
+.alert-warning,
+.alert-danger{
+  border-color: var(--border) !important;
+  background: var(--surface-2) !important;
+}
+.chip-success .dot,
+.chip-warning .dot,
+.chip-danger .dot,
+.chip-primary .dot{
+  background: var(--muted-2) !important;
+}
+
+/* ----- Links inside cards (remove blue/purple tint) ----- */
+.card > a{
+  border-color: var(--border) !important;
+  background: var(--surface-2) !important;
+}
+.card > a:hover{
+  border-color: var(--border-2) !important;
+  background: var(--surface-3) !important;
+}
+
+.card a:not(:first-child):hover{
+  background: var(--surface-3) !important;
+}
+
+/* ----- Table polish: neutral hover/header ----- */
+.table,
+table{
+  background: var(--surface) !important;
+}
+.table th,
+table th{
+  background: var(--surface-3) !important;
+}
+.table tr:hover td,
+table tr:hover td{
+  background: var(--surface-2) !important;
+}
+
+/* ----- QR scan: remove purple line/glow ----- */
+.scan-frame::before{
+  box-shadow: none !important;
+  border-color: var(--border) !important;
+}
+.scan-line{
+  background: var(--primary) !important;
+  filter: none !important;
+}
+
+/* ----- Selection: monochrome ----- */
+::selection{
+  background: var(--primary) !important;
+  color: var(--primary-contrast) !important;
+}
