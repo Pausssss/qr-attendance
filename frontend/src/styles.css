@@ -27,9 +27,9 @@
   --max: 1180px;
 
   /* Colors (Dark default) */
-  --bg: #070b16;
-  --bg2:#0a1225;
-  --bg3:#0f1b34;
+  --bg: #0b1220;
+  --bg2:#0b1220;
+  --bg3:#0b1220;
 
   --text: rgba(255,255,255,.92);
   --muted: rgba(255,255,255,.68);
@@ -62,17 +62,18 @@
 /* Light mode */
 @media (prefers-color-scheme: light){
   :root{
-    --bg:#f6f8ff;
-    --bg2:#eef2ff;
-    --bg3:#e9efff;
+    --bg:#f2f4f7;
+    --bg2:#f2f4f7;
+    --bg3:#f2f4f7;
 
     --text: rgba(15,23,42,.92);
     --muted: rgba(15,23,42,.68);
     --muted-2: rgba(15,23,42,.52);
 
-    --surface: rgba(255,255,255,.78);
-    --surface-2: rgba(255,255,255,.88);
-    --surface-3: rgba(255,255,255,.94);
+    --surface: #e7edf6;
+
+    --surface-2: #edf2f9;
+    --surface-3: #f2f6fb;
 
     --border: rgba(15,23,42,.12);
     --border-2: rgba(15,23,42,.18);
@@ -93,13 +94,8 @@ body{
   color: var(--text);
   overflow-x:hidden;
 
-  /* “aurora” nền mềm */
-  background:
-    radial-gradient(1100px 520px at 12% -10%, rgba(124,92,255,.35), transparent 60%),
-    radial-gradient(900px 540px at 88% 0%, rgba(91,157,255,.26), transparent 60%),
-    radial-gradient(860px 520px at 60% 120%, rgba(34,197,94,.14), transparent 60%),
-    linear-gradient(180deg, var(--bg), var(--bg2) 55%, var(--bg3));
-  background-attachment: fixed;
+  /* Nền đơn sắc (monochrome) */
+  background: var(--bg);
 }
 
 /* text rendering */
