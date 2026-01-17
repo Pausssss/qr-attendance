@@ -565,6 +565,7 @@ public class TeacherService {
       int c = 0;
       Cell h0 = header.createCell(c++); h0.setCellValue("Student ID"); h0.setCellStyle(headerStyle);
       Cell h1 = header.createCell(c++); h1.setCellValue("Họ tên"); h1.setCellStyle(headerStyle);
+      Cell h2 = header.createCell(c++); h2.setCellValue("Email"); h2.setCellStyle(headerStyle);
 
       // session columns
       int idx = 1;
@@ -581,13 +582,15 @@ public class TeacherService {
 
       // Data rows
       for (Object[] row : studentsRows) {
-        Long studentId = (Long) row[0];
-        String fullName = (String) row[1];
+        Long studentId = ((Number) row[0]).longValue();
+        String fullName = String.valueOf(row[1]);
+        String email = String.valueOf(row[2]);
 
         Row rr = sh.createRow(r++);
         int cc = 0;
         rr.createCell(cc++).setCellValue(studentId);
         rr.createCell(cc++).setCellValue(fullName);
+        rr.createCell(cc++).setCellValue(email);
 
         int present = 0;
         int absent = 0;
@@ -620,7 +623,7 @@ public class TeacherService {
       }
 
       // autosize
-      int totalCols = 2 + sessions.size() + 3;
+      int totalCols = 3 + sessions.size() + 3;
       for (int i = 0; i < totalCols; i++) sh.autoSizeColumn(i);
 
       // legend

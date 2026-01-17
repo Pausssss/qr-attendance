@@ -93,8 +93,12 @@ body{
   color: var(--text);
   overflow-x:hidden;
 
-  /* Nền đơn sắc (modern) — không loang */
-  background: var(--bg);
+  /* “aurora” nền mềm */
+  background:
+    radial-gradient(1100px 520px at 12% -10%, rgba(124,92,255,.35), transparent 60%),
+    radial-gradient(900px 540px at 88% 0%, rgba(91,157,255,.26), transparent 60%),
+    radial-gradient(860px 520px at 60% 120%, rgba(34,197,94,.14), transparent 60%),
+    linear-gradient(180deg, var(--bg), var(--bg2) 55%, var(--bg3));
   background-attachment: fixed;
 }
 

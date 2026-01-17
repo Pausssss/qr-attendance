@@ -71,7 +71,7 @@ export default function TeacherSessionDetail() {
 
   const exportAttendanceXlsx = async () => {
     try {
-      const res = await api.get(`/teacher/sessions/${sessionId}/attendance/export`, {
+      const res = await api.get(`/api/teacher/sessions/${sessionId}/attendance/export`, {
         responseType: 'blob',
       });
       const blob = new Blob([res.data], {
@@ -225,7 +225,7 @@ export default function TeacherSessionDetail() {
       {/* POPUP QR TO */}
       {showQrModal && qrPayload && (
         <div className="qa-popup-backdrop" onClick={() => setShowQrModal(false)}>
-          <div className="modal modal-qr" onClick={(e) => e.stopPropagation()}>
+          <div className="qa-popup modal-qr" onClick={(e) => e.stopPropagation()}>
             <div className="qa-popup-header">
               <h3 style={{ margin: 0 }}>Quét mã QR</h3>
               <button
