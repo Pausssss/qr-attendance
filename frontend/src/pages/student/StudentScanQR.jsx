@@ -4,62 +4,6 @@ import api from '../../api/axiosClient';
 
 const GEO_OPTIONS = { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 };
 
-// Student cần accuracy chặt hơn để hạn chế gian lận.
-const DESIRED_ACCURACY_M = 80;
-const MAX_WAIT_GPS_MS = 10000;
-
-function getBestPosition({ desiredAccuracy = DESIRED_ACCURACY_M, maxWaitMs = MAX_WAIT_GPS_MS } = {}) {
-  return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation not supported'));
-      return;
-    }
-
-    let best = null;
-    let last = null;
-    let resolved = false;
-
-    const finish = (pos) => {
-      if (resolved) return;
-      resolved = true;
-      try {
-        navigator.geolocation.clearWatch(watchId);
-      } catch (_) {}
-      clearTimeout(timer);
-      if (!pos) reject(new Error('No position'));
-      else resolve(pos);
-    };
-
-    const onPos = (pos) => {
-      last = pos;
-      const acc = pos?.coords?.accuracy;
-      const bestAcc = best?.coords?.accuracy;
-      if (!best || (acc != null && bestAcc != null && acc < bestAcc) || (acc != null && bestAcc == null)) {
-        best = pos;
-      }
-      if (acc != null && acc <= desiredAccuracy) {
-        finish(best);
-      }
-    };
-
-    const onErr = (err) => {
-      if (best || last) finish(best || last);
-      else reject(err);
-    };
-
-    const watchId = navigator.geolocation.watchPosition(onPos, onErr, {
-      ...GEO_OPTIONS,
-      timeout: 15000,
-      maximumAge: 0,
-      enableHighAccuracy: true,
-    });
-
-    const timer = setTimeout(() => {
-      finish(best || last);
-    }, maxWaitMs);
-  });
-}
-
 function dataUrlToFile(dataUrl, filename = `selfie_${Date.now()}.jpg`) {
   const [meta, b64] = dataUrl.split(',');
   const mime = (meta && meta.match(/data:(.*);base64/))?.[1] || 'image/jpeg';
@@ -216,57 +160,65 @@ export default function StudentScanQR() {
     setStatus('loading');
     setMessage('Đang gửi dữ liệu điểm danh...');
 
-    try {
-      const pos = await getBestPosition({ desiredAccuracy: DESIRED_ACCURACY_M, maxWaitMs: MAX_WAIT_GPS_MS });
-      const accuracy = pos?.coords?.accuracy;
-      if (accuracy != null && accuracy > DESIRED_ACCURACY_M) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const accuracy = pos.coords.accuracy;
+          if (accuracy && accuracy > 80) {
+            setStatus('error');
+            setMessage(
+              `Vị trí hiện tại chưa chính xác (±${Math.round(
+                accuracy
+              )}m). Hãy bật "Độ chính xác cao" (High accuracy) và thử lại.`
+            );
+            return;
+          }
+
+          // ✅ Upload ảnh trước, chỉ lưu URL (ngắn) vào DB thay vì base64
+          const photoUrl = await uploadSelfie(selfieDataUrl);
+          if (!photoUrl) {
+            setStatus('error');
+            setMessage('Upload ảnh thất bại. Hãy thử chụp lại và gửi lại.');
+            return;
+          }
+
+          const body = {
+            payload,
+            gpsLat: pos.coords.latitude,
+            gpsLng: pos.coords.longitude,
+            photoUrl, // "/uploads/xxx.jpg" (hoặc URL)
+          };
+
+          const res = await api.post('/api/attendance/check-in', body);
+          setStatus('success');
+          setMessage('Điểm danh thành công!');
+          setAttendance(res.data.attendance || null);
+          setDistanceInfo({
+            distanceMeters: res.data?.distanceMeters ?? null,
+            maxDistanceMeters: res.data?.maxDistanceMeters ?? null,
+          });
+          setStep('done');
+          stopCamera();
+        } catch (err) {
+          console.error(err);
+          setStatus('error');
+          // Nếu backend có trả thêm distanceMeters/maxDistanceMeters trong lỗi, mình lưu lại để hiển thị cho dễ debug
+          const d = err.response?.data?.distanceMeters ?? null;
+          const m = err.response?.data?.maxDistanceMeters ?? null;
+          setDistanceInfo({ distanceMeters: d, maxDistanceMeters: m });
+
+          setMessage(
+            err.response?.data?.message ||
+              'Không điểm danh được. Hãy thử lại hoặc liên hệ giảng viên.'
+          );
+        }
+      },
+      () => {
         setStatus('error');
-        setMessage(
-          `Vị trí hiện tại chưa chính xác (±${Math.round(
-            accuracy
-          )}m). Hãy bật "Độ chính xác cao" (High accuracy), bật Wi‑Fi, ra gần cửa sổ/ngoài trời và thử lại.`
-        );
-        return;
-      }
-
-      // ✅ Upload ảnh trước, chỉ lưu URL (ngắn) vào DB thay vì base64
-      const photoUrl = await uploadSelfie(selfieDataUrl);
-      if (!photoUrl) {
-        setStatus('error');
-        setMessage('Upload ảnh thất bại. Hãy thử chụp lại và gửi lại.');
-        return;
-      }
-
-      const body = {
-        payload,
-        gpsLat: pos.coords.latitude,
-        gpsLng: pos.coords.longitude,
-        photoUrl, // "/uploads/xxx.jpg" (hoặc URL)
-      };
-
-      const res = await api.post('/api/attendance/check-in', body);
-      setStatus('success');
-      setMessage('Điểm danh thành công!');
-      setAttendance(res.data.attendance || null);
-      setDistanceInfo({
-        distanceMeters: res.data?.distanceMeters ?? null,
-        maxDistanceMeters: res.data?.maxDistanceMeters ?? null,
-      });
-      setStep('done');
-      stopCamera();
-    } catch (err) {
-      console.error(err);
-      setStatus('error');
-      const d = err.response?.data?.distanceMeters ?? null;
-      const m = err.response?.data?.maxDistanceMeters ?? null;
-      setDistanceInfo({ distanceMeters: d, maxDistanceMeters: m });
-
-      if (err?.code === 1) {
-        setMessage('Bạn đã từ chối quyền vị trí. Hãy bật lại quyền Location cho website và thử lại.');
-      } else {
-        setMessage(err.response?.data?.message || 'Không lấy được vị trí GPS. Hãy bật GPS và thử lại.');
-      }
-    }
+        setMessage('Không lấy được vị trí GPS. Hãy bật GPS và thử lại.');
+      },
+      GEO_OPTIONS
+    );
   };
 
   const resetAll = () => {
